@@ -1,0 +1,16 @@
+{
+  "autoload": {
+    "psr-4": {
+      "Xandros15\\Tumbler\\": "App/"
+    }
+  },
+  "require": {
+    "guzzlehttp/guzzle": "^6.3",
+    "kokororin/pixiv-api-php": "^2.1",
+    "symfony/var-dumper": "^3.3",
+    "monolog/monolog": "^1.23",
+    "pimple/pimple": "^3.2",
+    "symfony/dom-crawler": "^3.3",
+    "symfony/css-selector": "^3.3"
+  }
+}

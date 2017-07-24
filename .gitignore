@@ -1,0 +1,5 @@
+config.php
+debug.log
+error.log
+vendor
+composer.phar
