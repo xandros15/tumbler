@@ -38,7 +38,7 @@ final class Tumblr extends Tumbler
                 );
             }
             foreach ($response->response->posts as $post) {
-                if (isset($post->reblogged_root_name) && $post->reblogged_root_name !== $blogName) {
+                if ($this->isReblog($post)) {
                     continue;
                 }
                 $name = $directory . strtotime($post->date);
@@ -59,6 +59,16 @@ final class Tumblr extends Tumbler
                 break;
             }
         }
+    }
+
+    /**
+     * @param $post
+     *
+     * @return bool
+     */
+    private function isReblog($post)
+    {
+        return isset($post->reblogged_root_name) || strpos($post->caption, 'blockquote') !== false;
     }
 
     /**
