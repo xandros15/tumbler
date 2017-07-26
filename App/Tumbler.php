@@ -4,10 +4,11 @@ namespace Xandros15\Tumbler;
 
 
 use GuzzleHttp\{
-    Client, Exception\ClientException, Exception\ServerException, RequestOptions
+    Client, Exception\ServerException, RequestOptions
 };
 use Monolog\Registry;
 use Psr\Http\Message\ResponseInterface;
+use Psr\Log\LoggerInterface;
 
 abstract class Tumbler
 {
@@ -65,14 +66,14 @@ abstract class Tumbler
         $tries = 5;
         while (true) {
             try {
-                Registry::getInstance('global')->info("Trying connect ({$tries}): {$uri} | " . json_encode($options));
+                $this->getLogger()->info("Trying connect ({$tries}): {$uri} | " . json_encode($options));
                 $response = $this->client->request($method, $uri, $options);
                 break;
             } catch (ServerException $exception) {
                 if (!--$tries) {
                     throw $exception;
                 } else {
-                    Registry::getInstance('global')->error($exception->getMessage());
+                    $this->getLogger()->error($exception->getMessage());
                     usleep($lagSleep += $sleep);
                 }
             }
@@ -92,20 +93,20 @@ abstract class Tumbler
      */
     protected function saveImage(string $url, string $name, array $options = [])
     {
-        try {
-            Registry::getInstance('global')->info("Downloading image: $url; Name: $name");
-            $image = $this->fetch('get', $url, $options);
-            $contentType = $image->getHeaderLine('content-type');
-            $filename = $name . $this->getExtension($contentType);
-            if (!file_exists($filename) || $this->options[self::OVERRIDE]) {
-                file_put_contents($filename, (string) $image->getBody());
-                echo 'got: ' . $name . PHP_EOL;
-            } else {
-                echo 'exist: ' . $name . PHP_EOL;
-            }
-        } catch (ClientException $exception) {
-            Registry::getInstance('global')->error($exception->getMessage());
+        $image = $this->fetch('get', $url, $options);
+        $contentType = $image->getHeaderLine('content-type');
+        $filename = $name . $this->getExtension($contentType);
+        if (!file_exists($filename) || $this->options[self::OVERRIDE]) {
+            file_put_contents($filename, (string) $image->getBody());
         }
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    protected function getLogger(): LoggerInterface
+    {
+        return Registry::getInstance('global');
     }
 
     /**

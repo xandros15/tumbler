@@ -93,9 +93,9 @@ final class Pixiv extends Tumbler
     {
         if ($this->refreshToken) {
             $this->api->login(null, null, $this->refreshToken);
-            Registry::getInstance('global')->info('Login by refresh token');
+            $this->getLogger()->info('Login by refresh token');
         } elseif ($this->username && $this->password) {
-            Registry::getInstance('global')->info('Login by password');
+            $this->getLogger()->info('Login by password');
             $this->api->login($this->username, $this->password);
             $this->refreshToken = $this->api->getRefreshToken();
         } else {
