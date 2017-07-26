@@ -39,14 +39,6 @@ abstract class Tumbler
     private $options = self::DEFAULT_OPTIONS;
 
     /**
-     * Tumbler constructor.
-     */
-    public function __construct()
-    {
-        $this->client = new Client(static::DEFAULT_CLIENT_OPTIONS);
-    }
-
-    /**
      * @param string $ident
      * @param string $directory
      */
@@ -67,7 +59,7 @@ abstract class Tumbler
         while (true) {
             try {
                 $this->getLogger()->info("Trying connect ({$tries}): {$uri} | " . json_encode($options));
-                $response = $this->client->request($method, $uri, $options);
+                $response = $this->getClient()->request($method, $uri, $options);
                 break;
             } catch (ServerException $exception) {
                 if (!--$tries) {
@@ -99,6 +91,18 @@ abstract class Tumbler
         if (!file_exists($filename) || $this->options[self::OVERRIDE]) {
             file_put_contents($filename, (string) $image->getBody());
         }
+    }
+
+    /**
+     * @return Client
+     */
+    private function getClient(): Client
+    {
+        if (!$this->client instanceof Client) {
+            $this->client = new Client(static::DEFAULT_CLIENT_OPTIONS);
+        }
+
+        return $this->client;
     }
 
     /**

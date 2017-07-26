@@ -32,7 +32,6 @@ final class Pixiv extends Tumbler
         $this->api = new \PixivAPI();
         $this->username = $username;
         $this->password = $password;
-        parent::__construct();
     }
 
     /**

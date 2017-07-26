@@ -18,7 +18,6 @@ final class EH extends Tumbler
     public function __construct(string $cookie)
     {
         $this->cookie = $cookie;
-        parent::__construct();
     }
 
     /**

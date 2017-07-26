@@ -17,7 +17,6 @@ final class Tumblr extends Tumbler
     public function __construct(string $apiKey)
     {
         $this->apiKey = $apiKey;
-        parent::__construct();
     }
 
     /**

@@ -20,7 +20,6 @@ final class SC extends Tumbler
     public function __construct(string $cookie)
     {
         $this->cookie = $cookie;
-        parent::__construct();
     }
 
     /**
