@@ -102,6 +102,7 @@ abstract class Tumbler
     protected function getExtension(string $contentType): string
     {
         $list = [
+            'video/mp4' => '.mp4',
             'image/jpeg' => '.jpg',
             'image/png' => '.png',
             'image/gif' => '.gif',
