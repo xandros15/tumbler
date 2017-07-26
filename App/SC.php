@@ -32,7 +32,7 @@ final class SC extends Tumbler
         $directory = $this->createDirectory($directory);
         $lastId = 0;
         while (1) {
-            $page = $this->fetch('get', $url, ['headers' => ['Cookie' => $this->cookie]]);
+            $page = $this->fetch($url, ['headers' => ['Cookie' => $this->cookie]]);
             $list = new Crawler((string) $page->getBody());
             $thumbs = $list->filter('.content > div > .thumb');
             if ($thumbs->count() == 0) {
@@ -42,7 +42,7 @@ final class SC extends Tumbler
             foreach ($thumbs as $thumb) {
                 $thumb = new Crawler($thumb);
                 $imagePageUrl = self::BASE_URL . $thumb->filter('a')->first()->attr('href');
-                $imagePageRequest = $this->fetch('get', $imagePageUrl, ['headers' => ['Cookie' => $this->cookie]]);
+                $imagePageRequest = $this->fetch($imagePageUrl, ['headers' => ['Cookie' => $this->cookie]]);
                 $imagePage = new Crawler((string) $imagePageRequest->getBody());
                 $imageUrl = $imagePage->filter('a#highres')->first()->attr('href');
                 $name = strtotime($imagePage->filter('#stats a')->first()->attr('title'));

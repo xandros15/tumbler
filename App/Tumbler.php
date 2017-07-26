@@ -45,13 +45,12 @@ abstract class Tumbler
     abstract function download(string $ident, string $directory);
 
     /**
-     * @param string $method
      * @param string $uri
      * @param array $options
      *
      * @return ResponseInterface
      */
-    protected function fetch(string $method, string $uri, array $options = []): ResponseInterface
+    protected function fetch(string $uri, array $options = []): ResponseInterface
     {
         usleep($sleep = $lagSleep = random_int(min(static::SLEEP), max(static::SLEEP)));
         $options['headers'] = $this->prepareHeaders($options);
@@ -59,7 +58,7 @@ abstract class Tumbler
         while (true) {
             try {
                 $this->getLogger()->info("Trying connect ({$tries}): {$uri} | " . json_encode($options));
-                $response = $this->getClient()->request($method, $uri, $options);
+                $response = $this->getClient()->request('get', $uri, $options);
                 break;
             } catch (ServerException $exception) {
                 if (!--$tries) {
@@ -85,7 +84,7 @@ abstract class Tumbler
      */
     protected function saveImage(string $url, string $name, array $options = [])
     {
-        $image = $this->fetch('get', $url, $options);
+        $image = $this->fetch($url, $options);
         $contentType = $image->getHeaderLine('content-type');
         $filename = $name . $this->getExtension($contentType);
         if (!file_exists($filename) || $this->options[self::OVERRIDE]) {

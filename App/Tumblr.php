@@ -29,7 +29,7 @@ final class Tumblr extends Tumbler
         $directory = $this->createDirectory($directory);
         $url = $this->getBaseUrl($blogName);
         while (true) {
-            $response = json_decode($this->fetch('get', $url, ['query' => $query])->getBody());
+            $response = json_decode($this->fetch($url, ['query' => $query])->getBody());
             if ($response->meta->status != 200) {
                 throw new \RuntimeException(
                     'Got http error: ' .

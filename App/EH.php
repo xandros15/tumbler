@@ -67,7 +67,7 @@ final class EH extends Tumbler
         $pageUrl = $firstImageUrl;
         $directory = $this->createDirectory($directory);
         do {
-            $request = $this->fetch('get', $pageUrl, ['headers' => ['Cookie' => $this->cookie,]]);
+            $request = $this->fetch($pageUrl, ['headers' => ['Cookie' => $this->cookie,]]);
             $page = new Crawler((string) $request->getBody());
             $url = $this->getImageUrl($page);
             $name = $this->getName($page);
