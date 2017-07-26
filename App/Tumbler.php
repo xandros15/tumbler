@@ -29,9 +29,12 @@ abstract class Tumbler
         'Upgrade-Insecure-Requests' => 1,
         'DNT' => 1,
     ];
-
+    /** @const string */
     const OVERRIDE = 'override';
+
+    /** @var Client */
     private $client;
+    /** @var array */
     private $options = self::DEFAULT_OPTIONS;
 
     /**

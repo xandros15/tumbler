@@ -7,6 +7,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class EH extends Tumbler
 {
+    /** @var string */
     private $cookie;
 
     /**

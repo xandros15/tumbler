@@ -6,6 +6,7 @@ namespace Xandros15\Tumbler;
 final class Tumblr extends Tumbler
 {
     private const BASE_URL = 'https://api.tumblr.com/v2/blog/{{blog_name}}.tumblr.com/posts';
+    /** @var string */
     private $apiKey;
 
     /**

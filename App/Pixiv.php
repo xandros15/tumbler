@@ -12,11 +12,21 @@ final class Pixiv extends Tumbler
     ];
     private const AUTH_ERROR = 'The access token provided is invalid.';
     private const START_PAGE = 1;
+    /** @var \PixivAPI */
     private $api;
+    /** @var  string */
     private $refreshToken;
+    /** @var string */
     private $username;
+    /** @var string */
     private $password;
 
+    /**
+     * Pixiv constructor.
+     *
+     * @param string $username
+     * @param string $password
+     */
     public function __construct(string $username, string $password)
     {
         $this->api = new \PixivAPI();
