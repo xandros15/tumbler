@@ -7,8 +7,8 @@ use Monolog\Registry;
 
 final class Pixiv extends Tumbler
 {
-    public const IMAGE_REQUEST_OPTIONS = [
-        'headers' => ['Referer' => 'http://www.pixiv.net/',],
+    protected const DEFAULT_HEADERS = parent::DEFAULT_HEADERS + [
+        'Referer' => 'http://www.pixiv.net/',
     ];
     private const AUTH_ERROR = 'The access token provided is invalid.';
     private const START_PAGE = 1;
@@ -50,14 +50,10 @@ final class Pixiv extends Tumbler
                 if ($work['page_count'] > 1) {
                     for ($imagePage = 0; $imagePage < $work['page_count']; $imagePage++) {
                         $url = $this->changeImagePage($work['image_urls']['large'], $imagePage);
-                        $this->saveImage(
-                            $url,
-                            $directory . $name . '_' . ($imagePage + 1),
-                            self::IMAGE_REQUEST_OPTIONS
-                        );
+                        $this->saveImage($url, $directory . $name . '_' . ($imagePage + 1));
                     }
                 } else {
-                    $this->saveImage($work['image_urls']['large'], $directory . $name, self::IMAGE_REQUEST_OPTIONS);
+                    $this->saveImage($work['image_urls']['large'], $directory . $name);
                 }
             }
             if ($works['pagination']['pages'] < ++$page) {

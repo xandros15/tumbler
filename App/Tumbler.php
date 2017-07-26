@@ -12,23 +12,34 @@ use Psr\Http\Message\ResponseInterface;
 abstract class Tumbler
 {
     protected const SLEEP = [500000, 800000];
+    private const DEFAULT_OPTIONS = [
+        self::OVERRIDE => false,
+    ];
+    protected const DEFAULT_CLIENT_OPTIONS = [
+        RequestOptions::TIMEOUT => 0,
+        RequestOptions::ALLOW_REDIRECTS => true,
+        RequestOptions::COOKIES => true,
+    ];
+    protected const DEFAULT_HEADERS = [
+        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0',
+        'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language' => 'pl,en-US;q=0.7,en;q=0.3',
+        'Connection' => 'keep-alive',
+//            'Accept-Encoding' => 'gzip, deflate, br',
+        'Upgrade-Insecure-Requests' => 1,
+        'DNT' => 1,
+    ];
+
     const OVERRIDE = 'override';
-    protected $client;
-    protected $options;
+    private $client;
+    private $options = self::DEFAULT_OPTIONS;
 
     /**
      * Tumbler constructor.
-     *
-     * @param array $options
      */
-    public function __construct(array $options = [])
+    public function __construct()
     {
-        $this->client = new Client([
-            RequestOptions::TIMEOUT => 0,
-            RequestOptions::ALLOW_REDIRECTS => true,
-            RequestOptions::COOKIES => true,
-        ]);
-        $this->setOptions($options);
+        $this->client = new Client(static::DEFAULT_CLIENT_OPTIONS);
     }
 
     /**
@@ -47,7 +58,7 @@ abstract class Tumbler
     protected function fetch(string $method, string $uri, array $options = []): ResponseInterface
     {
         usleep($sleep = $lagSleep = random_int(min(static::SLEEP), max(static::SLEEP)));
-        $options['headers'] = array_merge($this->getDefaultHeaders(), $options['headers'] ?? []);
+        $options['headers'] = $this->prepareHeaders($options);
         $tries = 5;
         while (true) {
             try {
@@ -136,27 +147,19 @@ abstract class Tumbler
 
     /**
      * @param array $options
+     *
+     * @return array
      */
-    private function setOptions(array $options)
+    private function prepareHeaders(array $options)
     {
-        $this->options = array_merge([
-            self::OVERRIDE => false,
-        ], $options);
+        return array_merge(self::DEFAULT_HEADERS, $options['headers'] ?? []);
     }
 
     /**
-     * @return array
+     * @param array $options
      */
-    private function getDefaultHeaders(): array
+    public function setOptions(array $options)
     {
-        return [
-            'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0',
-            'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language' => 'pl,en-US;q=0.7,en;q=0.3',
-            'Connection' => 'keep-alive',
-//            'Accept-Encoding' => 'gzip, deflate, br',
-            'Upgrade-Insecure-Requests' => 1,
-            'DNT' => 1,
-        ];
+        $this->options = array_merge(static::DEFAULT_OPTIONS, $options);
     }
 }
