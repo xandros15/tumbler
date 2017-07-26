@@ -155,7 +155,7 @@ abstract class Tumbler
      */
     private function prepareHeaders(array $options)
     {
-        return array_merge(self::DEFAULT_HEADERS, $options['headers'] ?? []);
+        return array_merge(static::DEFAULT_HEADERS, $options['headers'] ?? []);
     }
 
     /**
