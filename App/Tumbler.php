@@ -46,7 +46,7 @@ abstract class Tumbler
      */
     protected function fetch(string $method, string $uri, array $options = []): ResponseInterface
     {
-        usleep($sleep = $lagSleep = random_int(self::SLEEP[0], self::SLEEP[1]));
+        usleep($sleep = $lagSleep = random_int(min(static::SLEEP), max(static::SLEEP)));
         $options['headers'] = array_merge($this->getDefaultHeaders(), $options['headers'] ?? []);
         $tries = 5;
         while (true) {
