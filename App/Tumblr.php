@@ -30,13 +30,6 @@ final class Tumblr extends Tumbler
         $url = $this->getBaseUrl($blogName);
         while (true) {
             $response = json_decode($this->fetch($url, ['query' => $query])->getBody());
-            if ($response->meta->status != 200) {
-                throw new \RuntimeException(
-                    'Got http error: ' .
-                    $response->meta->msg . ' url: ' . $url,
-                    $response->meta->status
-                );
-            }
             foreach ($response->response->posts as $post) {
                 if ($this->isReblog($post)) {
                     continue;
