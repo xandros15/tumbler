@@ -30,10 +30,9 @@ final class SC extends Tumbler
         $url = self::BASE_URL . '?' . http_build_query(['tags' => $ident, 'page' => self::START_PAGE]);
         $directory = $this->createDirectory($directory);
         $name = '';
-        $index = 0;
+        $index = 1;
         while ($url) {
-            $page = $this->fetch($url);
-            $page = new Crawler((string) $page->getBody(), null, self::BASE_URL);
+            $page = $this->fetchHTML($url);
             foreach ($this->getImageList($page) as $thumb) {
                 $imagePage = $this->getImagePage($thumb);
                 $imageUrl = $this->getImageUrl($imagePage);
@@ -54,9 +53,9 @@ final class SC extends Tumbler
 
     private function getImagePage(Crawler $page)
     {
-        $imagePageRequest = $this->fetch($page->filter('a')->first()->link()->getUri());
+        $link = $page->filter('a')->first()->link();
 
-        return new Crawler((string) $imagePageRequest->getBody(), null, self::BASE_URL);
+        return $this->fetchHTML($link->getUri());
     }
 
     private function getImageUrl(Crawler $page): string
@@ -70,7 +69,7 @@ final class SC extends Tumbler
         if ($last == $name || $last == $name . '_' . $index) {
             $name .= '_' . ++$index;
         } else {
-            $index = 0;
+            $index = 1;
         }
 
         return $name;
