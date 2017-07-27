@@ -7,11 +7,11 @@ use Monolog\Registry;
 
 final class Pixiv extends Tumbler
 {
-    protected const DEFAULT_HEADERS = parent::DEFAULT_HEADERS + [
-        'Referer' => 'http://www.pixiv.net/',
-    ];
     private const AUTH_ERROR = 'The access token provided is invalid.';
     private const START_PAGE = 1;
+    protected $headers = [
+        'Referer' => 'http://www.pixiv.net/',
+    ];
     /** @var \PixivAPI */
     private $api;
     /** @var  string */

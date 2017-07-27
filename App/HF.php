@@ -5,7 +5,7 @@ namespace Xandros15\Tumbler;
 
 use Symfony\Component\DomCrawler\Crawler;
 
-class HF extends Tumbler
+final class HF extends Tumbler
 {
     private const BASE_URL = 'http://www.hentai-foundry.com';
     private const PICTURES_ENDPOINT = '/pictures/user/';

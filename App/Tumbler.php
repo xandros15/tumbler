@@ -3,12 +3,12 @@
 namespace Xandros15\Tumbler;
 
 
-use GuzzleHttp\{
-    Client, Exception\ServerException, RequestOptions
-};
+use Goutte\Client;
+use GuzzleHttp\RequestOptions;
 use Monolog\Registry;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\DomCrawler\Crawler;
 
 abstract class Tumbler
 {
@@ -21,7 +21,8 @@ abstract class Tumbler
         RequestOptions::ALLOW_REDIRECTS => true,
         RequestOptions::COOKIES => true,
     ];
-    protected const DEFAULT_HEADERS = [
+
+    private const DEFAULT_HEADERS = [
         'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0',
         'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language' => 'pl,en-US;q=0.7,en;q=0.3',
@@ -30,8 +31,10 @@ abstract class Tumbler
         'Upgrade-Insecure-Requests' => 1,
         'DNT' => 1,
     ];
-    /** @const string */
     const OVERRIDE = 'override';
+
+    /** @var array */
+    protected $headers = [];
 
     /** @var Client */
     private $client;
@@ -42,7 +45,35 @@ abstract class Tumbler
      * @param string $ident
      * @param string $directory
      */
-    abstract function download(string $ident, string $directory);
+    abstract public function download(string $ident, string $directory);
+
+    /**
+     * @param array $options
+     */
+    public function setOptions(array $options)
+    {
+        $this->options = array_merge(static::DEFAULT_OPTIONS, $options);
+    }
+
+    /**
+     * @param string $uri
+     * @param array $options
+     *
+     * @return \Symfony\Component\DomCrawler\Crawler
+     */
+    protected function fetchHTML(string $uri, array $options = []): Crawler
+    {
+        $params = $options['query'] ?? [];
+        $headers = $this->prepareHeaders($options['headers'] ?? []);
+        $client = $this->getClient();
+        foreach ($headers as $name => $value) {
+            $client->setHeader($name, $value);
+        }
+        usleep(random_int(min(static::SLEEP), max(static::SLEEP)));
+        $this->getLogger()->info("Connect: {$uri} | " . json_encode($options));
+
+        return $client->request('get', $uri, $params);
+    }
 
     /**
      * @param string $uri
@@ -52,29 +83,11 @@ abstract class Tumbler
      */
     protected function fetch(string $uri, array $options = []): ResponseInterface
     {
-        usleep($sleep = $lagSleep = random_int(min(static::SLEEP), max(static::SLEEP)));
-        $options['headers'] = $this->prepareHeaders($options);
-        $tries = 5;
-        while (true) {
-            try {
-                $this->getLogger()->info("Trying connect ({$tries}): {$uri} | " . json_encode($options));
-                $response = $this->getClient()->request('get', $uri, $options);
-                break;
-            } catch (ServerException $exception) {
-                if (!--$tries) {
-                    throw $exception;
-                } else {
-                    $this->getLogger()->error($exception->getMessage());
-                    usleep($lagSleep += $sleep);
-                }
-            }
-        }
+        $options['headers'] = $this->prepareHeaders($options['headers'] ?? []);
+        usleep(random_int(min(static::SLEEP), max(static::SLEEP)));
+        $this->getLogger()->info("Connect: {$uri} | " . json_encode($options));
 
-        if (!isset($response)) {
-            throw new \RuntimeException('Missing response');
-        }
-
-        return $response;
+        return $this->getClient()->getClient()->request('get', $uri, $options);
     }
 
     /**
@@ -95,10 +108,11 @@ abstract class Tumbler
     /**
      * @return Client
      */
-    private function getClient(): Client
+    protected function getClient(): Client
     {
         if (!$this->client instanceof Client) {
-            $this->client = new Client(static::DEFAULT_CLIENT_OPTIONS);
+            $this->client = new Client();
+            $this->client->setClient(new \GuzzleHttp\Client(static::DEFAULT_CLIENT_OPTIONS));
         }
 
         return $this->client;
@@ -113,28 +127,7 @@ abstract class Tumbler
     }
 
     /**
-     * @param string $contentType
-     *
-     * @return string
-     */
-    protected function getExtension(string $contentType): string
-    {
-        $list = [
-            'video/mp4' => '.mp4',
-            'image/jpeg' => '.jpg',
-            'image/png' => '.png',
-            'image/gif' => '.gif',
-            'image/bmp' => '.bmp',
-            'video/webm' => '.webm',
-            'video/ogg' => '.ogg',
-        ];
-
-        return $list[$contentType] ?? '';
-    }
-
-    /**
      * @param string $directory
-     *
      *
      * @throws \RuntimeException
      * @return string
@@ -153,20 +146,41 @@ abstract class Tumbler
     }
 
     /**
-     * @param array $options
-     *
-     * @return array
+     * @param string $name
+     * @param string $value
      */
-    private function prepareHeaders(array $options)
+    protected function setHeader(string $name, string $value)
     {
-        return array_merge(static::DEFAULT_HEADERS, $options['headers'] ?? []);
+        $this->headers[$name] = $value;
     }
 
     /**
-     * @param array $options
+     * @param string $contentType
+     *
+     * @return string
      */
-    public function setOptions(array $options)
+    private function getExtension(string $contentType): string
     {
-        $this->options = array_merge(static::DEFAULT_OPTIONS, $options);
+        $list = [
+            'video/mp4' => '.mp4',
+            'image/jpeg' => '.jpg',
+            'image/png' => '.png',
+            'image/gif' => '.gif',
+            'image/bmp' => '.bmp',
+            'video/webm' => '.webm',
+            'video/ogg' => '.ogg',
+        ];
+
+        return $list[$contentType] ?? '';
+    }
+
+    /**
+     * @param array $headers
+     *
+     * @return array
+     */
+    private function prepareHeaders(array $headers)
+    {
+        return array_merge(self::DEFAULT_HEADERS, $this->headers, $headers);
     }
 }

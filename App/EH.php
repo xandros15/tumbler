@@ -7,9 +7,6 @@ use Symfony\Component\DomCrawler\Crawler;
 
 final class EH extends Tumbler
 {
-    /** @var string */
-    private $cookie;
-
     /**
      * EH constructor.
      *
@@ -17,7 +14,25 @@ final class EH extends Tumbler
      */
     public function __construct(string $cookie)
     {
-        $this->cookie = $cookie;
+        $this->setHeader('Cookie', $cookie);
+    }
+
+    /**
+     * @param string $firstImageUrl
+     * @param string $directory
+     */
+    function download(string $firstImageUrl, string $directory)
+    {
+        $pageUrl = $firstImageUrl;
+        $directory = $this->createDirectory($directory);
+        do {
+            $request = $this->fetch($pageUrl);
+            $page = new Crawler((string) $request->getBody());
+            $url = $this->getImageUrl($page);
+            $name = $this->getName($page);
+            $this->saveImage($url, $directory . $name);
+            $pageUrl = $this->getNextPage($page, $pageUrl);
+        } while ($pageUrl);
     }
 
     /**
@@ -55,24 +70,5 @@ final class EH extends Tumbler
         $next = $page->filter('#next')->attr('href');
 
         return $next != $currentUrl ? $next : '';
-    }
-
-
-    /**
-     * @param string $firstImageUrl
-     * @param string $directory
-     */
-    function download(string $firstImageUrl, string $directory)
-    {
-        $pageUrl = $firstImageUrl;
-        $directory = $this->createDirectory($directory);
-        do {
-            $request = $this->fetch($pageUrl, ['headers' => ['Cookie' => $this->cookie,]]);
-            $page = new Crawler((string) $request->getBody());
-            $url = $this->getImageUrl($page);
-            $name = $this->getName($page);
-            $this->saveImage($url, $directory . $name);
-            $pageUrl = $this->getNextPage($page, $pageUrl);
-        } while ($pageUrl);
     }
 }
