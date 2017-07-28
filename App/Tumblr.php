@@ -3,6 +3,8 @@
 namespace Xandros15\Tumbler;
 
 
+use Xandros15\Tumbler\Tumblr\Repository;
+
 final class Tumblr extends Tumbler
 {
     private const BASE_URL = 'https://api.tumblr.com/v2/blog/{{blog_name}}.tumblr.com/posts';
@@ -28,55 +30,21 @@ final class Tumblr extends Tumbler
         $query = ['api_key' => $this->apiKey, 'type' => 'photo', 'offset' => 0, 'reblog_info' => 'true'];
         $directory = $this->createDirectory($directory);
         $url = $this->getBaseUrl($blogName);
-        while (1) {
-            $response = json_decode($this->fetch($url, ['query' => $query])->getBody());
-            foreach ($response->response->posts as $post) {
-                if ($this->isReblog($post)) {
+        do {
+            $response = $this->fetch($url, ['query' => $query]);
+            $repository = new Repository($response);
+            foreach ($repository->getPosts() as $post) {
+                if ($post->isReblog()) {
                     continue;
                 }
-                if ($this->hasMedia($post)) {
-                    $this->downloadMedia($post, $directory);
+                if ($post->hasMedia()) {
+                    foreach ($post->getMedia() as $media) {
+                        $this->saveImage($media->getRawUri(), $directory . $media->getName());
+                    }
                 }
             }
             $query['offset'] += 20;
-            if ($query['offset'] > $response->response->total_posts) {
-                //ends
-                break;
-            }
-        }
-    }
-
-    /**
-     * @param $post
-     *
-     * @return bool
-     */
-    private function hasMedia($post): bool
-    {
-        return $post->photos && count($post->photos) > 0;
-    }
-
-    /**
-     * @param $post
-     * @param string $directory
-     */
-    private function downloadMedia($post, string $directory): void
-    {
-        $name = $directory . strtotime($post->date);
-        $counter = 0;
-        foreach ($post->photos as $photo) {
-            $this->saveImage($photo->original_size->url, $name . '_' . ++$counter);
-        }
-    }
-
-    /**
-     * @param $post
-     *
-     * @return bool
-     */
-    private function isReblog($post): bool
-    {
-        return isset($post->reblogged_root_name) || strpos($post->caption, 'blockquote') !== false;
+        } while (!$repository->isLast($query['offset']));
     }
 
     /**
