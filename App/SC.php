@@ -43,7 +43,12 @@ final class SC extends Tumbler
         }
     }
 
-    private function getImageList(Crawler $page)
+    /**
+     * @param Crawler $page
+     *
+     * @return \Traversable
+     */
+    private function getImageList(Crawler $page): \Traversable
     {
         $thumbs = $page->filter('.content > div > .thumb');
         foreach ($thumbs as $thumb) {
@@ -51,7 +56,12 @@ final class SC extends Tumbler
         }
     }
 
-    private function getImagePage(Crawler $page)
+    /**
+     * @param Crawler $page
+     *
+     * @return Crawler
+     */
+    private function getImagePage(Crawler $page): Crawler
     {
         $link = $page->filter('a')->first()->link();
 
@@ -63,6 +73,13 @@ final class SC extends Tumbler
         return $page->filter('a#highres')->first()->link()->getUri();
     }
 
+    /**
+     * @param Crawler $page
+     * @param string $last
+     * @param int $index
+     *
+     * @return string
+     */
     private function getName(Crawler $page, string $last, int &$index): string
     {
         $name = strtotime($page->filter('#stats a')->first()->attr('title'));
@@ -80,7 +97,7 @@ final class SC extends Tumbler
      *
      * @return string
      */
-    private function getNextPage(Crawler $page)
+    private function getNextPage(Crawler $page): string
     {
         $pagination = $page->filter('#paginator .pagination a');
         if ($pagination->count() && $pagination->first()->html() == '&gt;&gt;') {
