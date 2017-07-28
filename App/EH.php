@@ -29,7 +29,7 @@ final class EH extends Tumbler
         $url = $this->getGalleryFirstPage($gallery);
         while ($url) {
             $page = $this->fetchHTML($url);
-            $this->saveImage($this->getImageUrl($page), $directory . $this->getName($page));
+            $this->saveMedia($this->getImageUrl($page), $directory . $this->getName($page));
             $url = $this->getNextPage($page, $url);
         }
     }

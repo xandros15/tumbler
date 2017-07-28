@@ -50,7 +50,7 @@ final class Tumblr extends Tumbler
                 }
                 if ($post->hasMedia()) {
                     foreach ($post->getMedia() as $media) {
-                        $this->saveImage($media->getRawUri(), $directory . $media->getName());
+                        $this->saveMedia($media->getRawUri(), $directory . $media->getName());
                     }
                 }
             }
@@ -74,7 +74,7 @@ final class Tumblr extends Tumbler
                 }
                 if ($post->hasMedia()) {
                     foreach ($post->getMedia() as $media) {
-                        $this->saveImage($media->getRawUri(), $directory . $media->getName());
+                        $this->saveMedia($media->getRawUri(), $directory . $media->getName());
                     }
                 }
             }

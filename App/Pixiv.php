@@ -53,7 +53,7 @@ final class Pixiv extends Tumbler
                 if ($work['page_count'] > 1) {
                     $this->createGallery($name, $work['image_urls']['large'], $work['page_count']);
                 } else {
-                    $this->saveImage($work['image_urls']['large'], $name);
+                    $this->saveMedia($work['image_urls']['large'], $name);
                 }
             }
             if ($response['pagination']['pages'] < ++$page) {
@@ -110,7 +110,7 @@ final class Pixiv extends Tumbler
     {
         for ($index = 0; $index < $count; $index++) {
             $url = $this->changeImagePage($url, $index);
-            $this->saveImage($url, $name . '_' . ($index + 1));
+            $this->saveMedia($url, $name . '_' . ($index + 1));
         }
     }
 }

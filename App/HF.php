@@ -44,7 +44,7 @@ final class HF extends Tumbler
             $page = $this->fetchHTML($url);
             foreach ($this->getImageList($page, $url) as $thumb) {
                 $imagePage = $this->getImagePage($thumb);
-                $this->saveImage($this->getImageSrc($imagePage), $directory . $this->getImageName($imagePage));
+                $this->saveMedia($this->getImageSrc($imagePage), $directory . $this->getImageName($imagePage));
             }
 
             $url = $this->getNextPage($page, $url);

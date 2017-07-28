@@ -37,7 +37,7 @@ final class SC extends Tumbler
                 $imagePage = $this->getImagePage($thumb);
                 $imageUrl = $this->getImageUrl($imagePage);
                 $name = $this->getName($imagePage, $name, $index);
-                $this->saveImage($imageUrl, $directory . $name);
+                $this->saveMedia($imageUrl, $directory . $name);
             }
             $url = $this->getNextPage($page);
         }

@@ -94,7 +94,7 @@ abstract class Tumbler
      * @param string $name
      * @param array $options
      */
-    protected function saveImage(string $url, string $name, array $options = []): void
+    protected function saveMedia(string $url, string $name, array $options = []): void
     {
         $image = $this->fetch($url, $options);
         $contentType = $image->getHeaderLine('content-type');
