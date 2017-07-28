@@ -1,10 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: xandros15
- * Date: 28.07.2017
- * Time: 16:35
- */
 
 namespace Xandros15\Tumbler\Tumblr;
 
