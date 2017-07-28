@@ -18,21 +18,16 @@ final class HF extends Tumbler
     {
         $url = self::BASE_URL . self::PICTURES_ENDPOINT . $ident;
         $directory = $this->createDirectory($directory);
-        $page = new Crawler((string) $this->fetch($url)->getBody());
+        $page = $this->fetchHTML($url);
         $this->passRestrictionPage($page);
-        while (1) {
-            $page = new Crawler((string) $this->fetch($url)->getBody());
-            foreach ($this->getImageList($page) as $thumb) {
+        while ($url) {
+            $page = $this->fetchHTML($url);
+            foreach ($this->getImageList($page, $url) as $thumb) {
                 $imagePage = $this->getImagePage($thumb);
                 $this->saveImage($this->getImageSrc($imagePage), $directory . $this->getImageName($imagePage));
             }
 
-            $next = $this->getNextPage($page);
-            if (!$next || $next == $url) {
-                break;
-            } else {
-                $url = $next;
-            }
+            $url = $this->getNextPage($page, $url);
         }
     }
 
@@ -43,31 +38,33 @@ final class HF extends Tumbler
      */
     private function getImagePage(Crawler $thumb)
     {
-        return new Crawler((string) $this->fetch(self::BASE_URL . $thumb->attr('href'))->getBody());
+        return $this->fetchHTML($thumb->link()->getUri());
     }
 
     /**
      * @param Crawler $page
+     * @param $currentUri
      *
      * @return \Generator
      */
-    private function getImageList(Crawler $page)
+    private function getImageList(Crawler $page, $currentUri)
     {
         foreach ($page->filter('.thumbLink') as $thumb) {
-            yield new Crawler($thumb);
+            yield new Crawler($thumb, $currentUri);
         }
     }
 
     /**
      * @param Crawler $page
+     * @param string $url
      *
-     * @return null|string
+     * @return string
      */
-    private function getNextPage(Crawler $page):? string
+    private function getNextPage(Crawler $page, string $url): string
     {
-        $next = $page->filter('.yiiPager .next a');
+        $link = $page->filter('.yiiPager .next a');
 
-        return $next->count() ? self::BASE_URL . $next->first()->attr('href') : null;
+        return $link->count() && ($next = $link->first()->link()->getUri() != $url) ? $next : '';
     }
 
     /**
@@ -112,12 +109,13 @@ final class HF extends Tumbler
 
     /**
      * @param Crawler $page
+     *
+     * @return Crawler
      */
-    private function passRestrictionPage(Crawler $page)
+    private function passRestrictionPage(Crawler $page): Crawler
     {
         $link = $page->filter('#frontPage_link');
-        if ($link->count()) {
-            $this->fetch(self::BASE_URL . $link->first()->attr('href'));
-        }
+
+        return $link->count() ? $this->fetchHTML($link->first()->link()->getUri()) : $page;
     }
 }
