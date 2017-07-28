@@ -3,6 +3,7 @@
 namespace Xandros15\Tumbler;
 
 
+use Xandros15\Tumbler\Tumblr\Post;
 use Xandros15\Tumbler\Tumblr\Repository;
 
 final class Tumblr extends Tumbler
@@ -27,11 +28,45 @@ final class Tumblr extends Tumbler
      */
     public function download(string $blogName, string $directory): void
     {
-        $query = ['api_key' => $this->apiKey, 'type' => 'photo', 'offset' => 0, 'reblog_info' => 'true'];
         $directory = $this->createDirectory($directory);
-        $url = $this->getBaseUrl($blogName);
+        $uri = $this->getBaseUri($blogName);
+        $this->downloadPhoto($directory, $uri);
+        $this->downloadVideo($directory, $uri);
+    }
+
+    /**
+     * @param string $uri
+     * @param string $directory
+     */
+    private function downloadPhoto(string $uri, string $directory)
+    {
+        $query = ['api_key' => $this->apiKey, 'type' => Post::PHOTO, 'offset' => 0, 'reblog_info' => 'true'];
         do {
-            $response = $this->fetch($url, ['query' => $query]);
+            $response = $this->fetch($uri, ['query' => $query]);
+            $repository = new Repository($response);
+            foreach ($repository->getPosts() as $post) {
+                if ($post->isReblog()) {
+                    continue;
+                }
+                if ($post->hasMedia()) {
+                    foreach ($post->getMedia() as $media) {
+                        $this->saveImage($media->getRawUri(), $directory . $media->getName());
+                    }
+                }
+            }
+            $query['offset'] += 20;
+        } while (!$repository->isLast($query['offset']));
+    }
+
+    /**
+     * @param string $uri
+     * @param string $directory
+     */
+    private function downloadVideo(string $uri, string $directory)
+    {
+        $query = ['api_key' => $this->apiKey, 'type' => Post::VIDEO, 'offset' => 0, 'reblog_info' => 'true'];
+        do {
+            $response = $this->fetch($uri, ['query' => $query]);
             $repository = new Repository($response);
             foreach ($repository->getPosts() as $post) {
                 if ($post->isReblog()) {
@@ -52,7 +87,7 @@ final class Tumblr extends Tumbler
      *
      * @return string
      */
-    private function getBaseUrl(string $blogName): string
+    private function getBaseUri(string $blogName): string
     {
         return strtr(self::BASE_URL, ['{{blog_name}}' => $blogName]);
     }
