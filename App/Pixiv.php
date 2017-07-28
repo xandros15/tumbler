@@ -3,8 +3,6 @@
 namespace Xandros15\Tumbler;
 
 
-use Monolog\Registry;
-
 final class Pixiv extends Tumbler
 {
     private const AUTH_ERROR = 'The access token provided is invalid.';
@@ -43,33 +41,36 @@ final class Pixiv extends Tumbler
         $directory = $this->createDirectory($directory);
         $page = self::START_PAGE;
         while (true) {
-            Registry::getInstance('global')->info("Getting page {$page} from user {$user_id}");
-            $works = $this->api->users_works($user_id, $page);
-            if ($works['status'] !== 'success') {
-                if (self::AUTH_ERROR == $works['errors']['system']['message']) {
-                    $this->auth();
-                    continue;
-                } else {
-                    throw new \RuntimeException('Api have an error: ' . $works['errors']['system']['message'], 403);
-                }
+            $response = $this->api->users_works($user_id, $page);
+            $this->getLogger()->info("Connect: id {$user_id} page {$page}");
+            if ($this->isRequireAuthorization($response)) {
+                $this->authorization();
+                continue;
             }
 
-            foreach ($works['response'] as $work) {
-                $name = strtotime($work['created_time']);
+            foreach ($response['response'] as $work) {
+                $name = $directory . strtotime($work['created_time']);
                 if ($work['page_count'] > 1) {
-                    for ($imagePage = 0; $imagePage < $work['page_count']; $imagePage++) {
-                        $url = $this->changeImagePage($work['image_urls']['large'], $imagePage);
-                        $this->saveImage($url, $directory . $name . '_' . ($imagePage + 1));
-                    }
+                    $this->createGallery($name, $work['image_urls']['large'], $work['page_count']);
                 } else {
-                    $this->saveImage($work['image_urls']['large'], $directory . $name);
+                    $this->saveImage($work['image_urls']['large'], $name);
                 }
             }
-            if ($works['pagination']['pages'] < ++$page) {
+            if ($response['pagination']['pages'] < ++$page) {
                 //ends
                 break;
             }
         }
+    }
+
+    /**
+     * @param array $response
+     *
+     * @return bool
+     */
+    private function isRequireAuthorization(array $response)
+    {
+        return $response['status'] !== 'success' && self::AUTH_ERROR == $response['errors']['system']['message'];
     }
 
     /**
@@ -80,15 +81,13 @@ final class Pixiv extends Tumbler
      */
     private function changeImagePage(string $url, string $page): string
     {
-        $page = '_p' . $page . '.';
-
-        return preg_replace('/_p\d{1,2}./', $page, $url);
+        return preg_replace('/_p\d{1,2}./', '_p' . $page . '.', $url);
     }
 
     /**
      * @throws \RuntimeException
      */
-    private function auth()
+    private function authorization()
     {
         if ($this->refreshToken) {
             $this->api->login(null, null, $this->refreshToken);
@@ -99,6 +98,19 @@ final class Pixiv extends Tumbler
             $this->refreshToken = $this->api->getRefreshToken();
         } else {
             throw new \RuntimeException('Missing authorization');
+        }
+    }
+
+    /**
+     * @param string $name
+     * @param string $url
+     * @param int $count
+     */
+    private function createGallery(string $name, string $url, int $count)
+    {
+        for ($index = 0; $index < $count; $index++) {
+            $url = $this->changeImagePage($url, $index);
+            $this->saveImage($url, $name . '_' . ($index + 1));
         }
     }
 }
