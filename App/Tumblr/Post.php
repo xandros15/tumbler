@@ -56,7 +56,7 @@ final class Post
      */
     public function isReblog(): bool
     {
-        return isset($this->params['reblogged_root_name']) || strpos($this->params['caption'], 'blockquote') !== false;
+        return isset($this->params['reblogged_root_name']);
     }
 
     /**
