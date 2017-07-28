@@ -63,16 +63,15 @@ abstract class Tumbler
      */
     protected function fetchHTML(string $uri, array $options = []): Crawler
     {
-        $params = $options['query'] ?? [];
-        $headers = $this->prepareHeaders($options['headers'] ?? []);
+        $options['headers'] = $this->prepareHeaders($options['headers'] ?? []);
         $client = $this->getClient();
-        foreach ($headers as $name => $value) {
+        foreach ($options['headers'] as $name => $value) {
             $client->setHeader($name, $value);
         }
         usleep(random_int(min(static::SLEEP), max(static::SLEEP)));
         $this->getLogger()->info("Connect: {$uri} | " . json_encode($options));
 
-        return $client->request('get', $uri, $params);
+        return $client->request('get', $uri, $options['query']);
     }
 
     /**
