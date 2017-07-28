@@ -18,29 +18,38 @@ final class EH extends Tumbler
     }
 
     /**
-     * @param string $firstImageUrl
+     * @param string $galleryUrl
      * @param string $directory
      */
-    function download(string $firstImageUrl, string $directory)
+    function download(string $galleryUrl, string $directory)
     {
-        $pageUrl = $firstImageUrl;
         $directory = $this->createDirectory($directory);
-        do {
-            $request = $this->fetch($pageUrl);
-            $page = new Crawler((string) $request->getBody());
-            $url = $this->getImageUrl($page);
-            $name = $this->getName($page);
-            $this->saveImage($url, $directory . $name);
-            $pageUrl = $this->getNextPage($page, $pageUrl);
-        } while ($pageUrl);
+
+        $gallery = $this->fetchHTML($galleryUrl);
+        $url = $this->getGalleryFirstPage($gallery);
+        while ($url) {
+            $page = $this->fetchHTML($url);
+            $this->saveImage($this->getImageUrl($page), $directory . $this->getName($page));
+            $url = $this->getNextPage($page, $url);
+        }
+    }
+
+    /**
+     * @param Crawler $gallery
+     *
+     * @return string
+     */
+    private function getGalleryFirstPage(Crawler $gallery)
+    {
+        return $gallery->filter('#gdt a')->first()->link()->getUri();
     }
 
     /**
      * @param Crawler $page
      *
-     * @return null|string
+     * @return string
      */
-    private function getImageUrl(Crawler $page):? string
+    private function getImageUrl(Crawler $page): string
     {
         if ($page->filter('#i7 a')->count()) {
             return $page->filter('#i7 a')->attr('href');//(0)->getAttribute('href');
@@ -65,7 +74,7 @@ final class EH extends Tumbler
      *
      * @return string
      */
-    private function getNextPage(Crawler $page, string $currentUrl):? string
+    private function getNextPage(Crawler $page, string $currentUrl): string
     {
         $next = $page->filter('#next')->attr('href');
 
