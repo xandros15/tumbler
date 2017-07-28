@@ -34,16 +34,8 @@ final class Tumblr extends Tumbler
                 if ($this->isReblog($post)) {
                     continue;
                 }
-                $name = $directory . strtotime($post->date);
-                if (count($post->photos) > 1) {
-                    //gallery
-                    $counter = 0;
-                    foreach ($post->photos as $photo) {
-                        $this->saveImage($photo->original_size->url, $name . '_' . ++$counter);
-                    }
-                } else {
-                    $photo = reset($post->photos);
-                    $this->saveImage($photo->original_size->url, $name);
+                if ($this->hasMedia($post)) {
+                    $this->downloadMedia($post, $directory);
                 }
             }
             $query['offset'] += 20;
@@ -51,6 +43,29 @@ final class Tumblr extends Tumbler
                 //ends
                 break;
             }
+        }
+    }
+
+    /**
+     * @param $post
+     *
+     * @return bool
+     */
+    private function hasMedia($post): bool
+    {
+        return $post->photos && count($post->photos) > 0;
+    }
+
+    /**
+     * @param $post
+     * @param string $directory
+     */
+    private function downloadMedia($post, string $directory): void
+    {
+        $name = $directory . strtotime($post->date);
+        $counter = 0;
+        foreach ($post->photos as $photo) {
+            $this->saveImage($photo->original_size->url, $name . '_' . ++$counter);
         }
     }
 
