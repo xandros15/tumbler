@@ -36,7 +36,7 @@ final class Pixiv extends Tumbler
      * @param string $user_id
      * @param string $directory
      */
-    public function download(string $user_id, string $directory)
+    public function download(string $user_id, string $directory): void
     {
         $directory = $this->createDirectory($directory);
         $page = self::START_PAGE;
@@ -68,7 +68,7 @@ final class Pixiv extends Tumbler
      *
      * @return bool
      */
-    private function isRequireAuthorization(array $response)
+    private function isRequireAuthorization(array $response): bool
     {
         return $response['status'] !== 'success' && self::AUTH_ERROR == $response['errors']['system']['message'];
     }
@@ -87,7 +87,7 @@ final class Pixiv extends Tumbler
     /**
      * @throws \RuntimeException
      */
-    private function authorization()
+    private function authorization(): void
     {
         if ($this->refreshToken) {
             $this->api->login(null, null, $this->refreshToken);
@@ -106,7 +106,7 @@ final class Pixiv extends Tumbler
      * @param string $url
      * @param int $count
      */
-    private function createGallery(string $name, string $url, int $count)
+    private function createGallery(string $name, string $url, int $count): void
     {
         for ($index = 0; $index < $count; $index++) {
             $url = $this->changeImagePage($url, $index);

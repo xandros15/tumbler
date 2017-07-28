@@ -25,7 +25,7 @@ final class SC extends Tumbler
      * @param string $ident
      * @param string $directory
      */
-    public function download(string $ident, string $directory)
+    public function download(string $ident, string $directory): void
     {
         $url = self::BASE_URL . '?' . http_build_query(['tags' => $ident, 'page' => self::START_PAGE]);
         $directory = $this->createDirectory($directory);
@@ -68,6 +68,11 @@ final class SC extends Tumbler
         return $this->fetchHTML($link->getUri());
     }
 
+    /**
+     * @param Crawler $page
+     *
+     * @return string
+     */
     private function getImageUrl(Crawler $page): string
     {
         return $page->filter('a#highres')->first()->link()->getUri();

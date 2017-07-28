@@ -31,7 +31,7 @@ final class HF extends Tumbler
      * @param string $ident
      * @param string $directory
      */
-    public function download(string $ident, string $directory)
+    public function download(string $ident, string $directory): void
     {
         $url = self::BASE_URL . self::PICTURES_ENDPOINT . $ident;
         $directory = $this->createDirectory($directory);
@@ -56,18 +56,18 @@ final class HF extends Tumbler
      *
      * @return Crawler
      */
-    private function getImagePage(Crawler $thumb)
+    private function getImagePage(Crawler $thumb): Crawler
     {
         return $this->fetchHTML($thumb->link()->getUri());
     }
 
     /**
      * @param Crawler $page
-     * @param $currentUri
+     * @param string $currentUri
      *
-     * @return \Generator
+     * @return \Traversable
      */
-    private function getImageList(Crawler $page, $currentUri)
+    private function getImageList(Crawler $page, string $currentUri): \Traversable
     {
         foreach ($page->filter('.thumbLink') as $thumb) {
             yield new Crawler($thumb, $currentUri);
@@ -90,9 +90,9 @@ final class HF extends Tumbler
     /**
      * @param Crawler $imagePage
      *
-     * @return false|int
+     * @return string
      */
-    private function getImageName(Crawler $imagePage)
+    private function getImageName(Crawler $imagePage): string
     {
         $time = $imagePage->filter('#yw0 time');
 
@@ -108,7 +108,7 @@ final class HF extends Tumbler
      *
      * @return string
      */
-    private function getImageSrc(Crawler $image)
+    private function getImageSrc(Crawler $image): string
     {
         /** @var $image Crawler */
         $image = $image->filter('#picBox img');
@@ -142,12 +142,15 @@ final class HF extends Tumbler
     /**
      * @return bool
      */
-    private function canSignup()
+    private function canSignup(): bool
     {
         return $this->password && $this->username;
     }
 
-    private function signup(Crawler $page)
+    /**
+     * @param Crawler $page
+     */
+    private function signup(Crawler $page): void
     {
         $form = $page->selectButton('Login')->form();
         $form['LoginForm[username]'] = $this->username;

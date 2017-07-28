@@ -21,7 +21,7 @@ final class EH extends Tumbler
      * @param string $galleryUrl
      * @param string $directory
      */
-    function download(string $galleryUrl, string $directory)
+    function download(string $galleryUrl, string $directory): void
     {
         $directory = $this->createDirectory($directory);
 
@@ -39,7 +39,7 @@ final class EH extends Tumbler
      *
      * @return string
      */
-    private function getGalleryFirstPage(Crawler $gallery)
+    private function getGalleryFirstPage(Crawler $gallery): string
     {
         return $gallery->filter('#gdt a')->first()->link()->getUri();
     }

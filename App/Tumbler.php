@@ -45,7 +45,7 @@ abstract class Tumbler
      * @param string $ident
      * @param string $directory
      */
-    abstract public function download(string $ident, string $directory);
+    abstract public function download(string $ident, string $directory): void;
 
     /**
      * @param array $options
@@ -94,7 +94,7 @@ abstract class Tumbler
      * @param string $name
      * @param array $options
      */
-    protected function saveImage(string $url, string $name, array $options = [])
+    protected function saveImage(string $url, string $name, array $options = []): void
     {
         $image = $this->fetch($url, $options);
         $contentType = $image->getHeaderLine('content-type');
@@ -148,7 +148,7 @@ abstract class Tumbler
      * @param string $name
      * @param string $value
      */
-    protected function setHeader(string $name, string $value)
+    protected function setHeader(string $name, string $value): void
     {
         $this->headers[$name] = $value;
     }
@@ -178,7 +178,7 @@ abstract class Tumbler
      *
      * @return array
      */
-    private function prepareHeaders(array $headers)
+    private function prepareHeaders(array $headers): array
     {
         return array_merge(self::DEFAULT_HEADERS, $this->headers, $headers);
     }

@@ -23,7 +23,7 @@ final class Tumblr extends Tumbler
      * @param string $blogName
      * @param string $directory
      */
-    public function download(string $blogName, string $directory)
+    public function download(string $blogName, string $directory): void
     {
         $query = ['api_key' => $this->apiKey, 'type' => 'photo', 'offset' => 0, 'reblog_info' => 'true'];
         $directory = $this->createDirectory($directory);
@@ -59,7 +59,7 @@ final class Tumblr extends Tumbler
      *
      * @return bool
      */
-    private function isReblog($post)
+    private function isReblog($post): bool
     {
         return isset($post->reblogged_root_name) || strpos($post->caption, 'blockquote') !== false;
     }
