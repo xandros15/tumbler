@@ -40,7 +40,7 @@ final class Pixiv extends Tumbler
     {
         $directory = $this->createDirectory($directory);
         $page = self::START_PAGE;
-        while (true) {
+        while (1) {
             $response = $this->api->users_works($user_id, $page);
             $this->getLogger()->info("Connect: id {$user_id} page {$page}");
             if ($this->isRequireAuthorization($response)) {

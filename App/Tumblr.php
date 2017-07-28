@@ -28,7 +28,7 @@ final class Tumblr extends Tumbler
         $query = ['api_key' => $this->apiKey, 'type' => 'photo', 'offset' => 0, 'reblog_info' => 'true'];
         $directory = $this->createDirectory($directory);
         $url = $this->getBaseUrl($blogName);
-        while (true) {
+        while (1) {
             $response = json_decode($this->fetch($url, ['query' => $query])->getBody());
             foreach ($response->response->posts as $post) {
                 if ($this->isReblog($post)) {
