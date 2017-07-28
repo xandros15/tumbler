@@ -56,8 +56,11 @@ $container['eh'] = function (Container $container): EH {
     return new EH($container['config']['eh']['cookie']);
 };
 
-$container['hf'] = function (): HF {
-    return new HF();
+$container['hf'] = function (Container $container): HF {
+    return new HF(
+        $container['config']['hf']['username'],
+        $container['config']['hf']['password']
+    );
 };
 
 Registry::addLogger($container->offsetGet('logger'));

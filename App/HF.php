@@ -10,6 +10,23 @@ final class HF extends Tumbler
     private const BASE_URL = 'http://www.hentai-foundry.com';
     private const PICTURES_ENDPOINT = '/pictures/user/';
 
+    /** @var string */
+    private $username;
+    /** @var string */
+    private $password;
+
+    /**
+     * HF constructor.
+     *
+     * @param string $username
+     * @param string $password
+     */
+    public function __construct(string $username = '', string $password = '')
+    {
+        $this->username = $username;
+        $this->password = $password;
+    }
+
     /**
      * @param string $ident
      * @param string $directory
@@ -19,7 +36,10 @@ final class HF extends Tumbler
         $url = self::BASE_URL . self::PICTURES_ENDPOINT . $ident;
         $directory = $this->createDirectory($directory);
         $page = $this->fetchHTML($url);
-        $this->passRestrictionPage($page);
+        $page = $this->passRestrictionPage($page);
+        if ($this->canSignup()) {
+            $this->signup($page);
+        }
         while ($url) {
             $page = $this->fetchHTML($url);
             foreach ($this->getImageList($page, $url) as $thumb) {
@@ -117,5 +137,22 @@ final class HF extends Tumbler
         $link = $page->filter('#frontPage_link');
 
         return $link->count() ? $this->fetchHTML($link->first()->link()->getUri()) : $page;
+    }
+
+    /**
+     * @return bool
+     */
+    private function canSignup()
+    {
+        return $this->password && $this->username;
+    }
+
+    private function signup(Crawler $page)
+    {
+        $form = $page->selectButton('Login')->form();
+        $form['LoginForm[username]'] = $this->username;
+        $form['LoginForm[password]'] = $this->password;
+        $this->getClient()->submit($form);
+        $this->getLogger()->info('Authorize by form');
     }
 }
