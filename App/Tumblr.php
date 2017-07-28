@@ -30,8 +30,8 @@ final class Tumblr extends Tumbler
     {
         $directory = $this->createDirectory($directory);
         $uri = $this->getBaseUri($blogName);
-        $this->downloadPhoto($directory, $uri);
-        $this->downloadVideo($directory, $uri);
+        $this->downloadPhoto($uri, $directory);
+        $this->downloadVideo($uri, $directory);
     }
 
     /**
