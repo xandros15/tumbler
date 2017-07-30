@@ -47,7 +47,7 @@ final class HF extends Tumbler
                 $this->saveMedia($this->getImageSrc($imagePage), $directory . $this->getImageName($imagePage));
             }
 
-            $url = $this->getNextPage($page, $url);
+            $url = $this->getNextPage($page);
         }
     }
 
@@ -76,15 +76,14 @@ final class HF extends Tumbler
 
     /**
      * @param Crawler $page
-     * @param string $url
      *
      * @return string
      */
-    private function getNextPage(Crawler $page, string $url): string
+    private function getNextPage(Crawler $page): string
     {
-        $link = $page->filter('.yiiPager .next a');
+        $link = $page->filter('.yiiPager .next:not(.hidden) a');
 
-        return $link->count() && ($next = $link->first()->link()->getUri() != $url) ? $next : '';
+        return $link->count() ? $link->first()->link()->getUri() : '';
     }
 
     /**
