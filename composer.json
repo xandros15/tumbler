@@ -12,6 +12,7 @@
     "pimple/pimple": "^3.2",
     "symfony/dom-crawler": "^3.3",
     "symfony/css-selector": "^3.3",
-    "fabpot/goutte": "^3.2"
+    "fabpot/goutte": "^3.2",
+    "abraham/twitteroauth": "^0.7.4"
   }
 }

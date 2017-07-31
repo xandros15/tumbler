@@ -5,7 +5,7 @@ use Monolog\{
 };
 use Pimple\Container;
 use Xandros15\Tumbler\{
-    EH, HF, Pixiv, SC, Tumblr
+    EH, HF, Pixiv, SC, Tumblr, Twitter
 };
 
 require_once 'vendor/autoload.php';
@@ -62,12 +62,19 @@ $container['hf'] = function (Container $container): HF {
         $container['config']['hf']['password']
     );
 };
+$container['twitter'] = function (Container $container): Twitter {
+    return new Twitter(
+        $container['config']['twitter']['consumer'],
+        $container['config']['twitter']['access']
+    );
+};
 
 Registry::addLogger($container->offsetGet('logger'));
 ErrorHandler::register($container->offsetGet('logger'));
 
 $name = '';
 
+$container->offsetGet('twitter')->download($name, __DIR__ . '/tmp/' . $name);
 //$container->offsetGet('hf')->download($name, __DIR__ . '/tmp/' . $name);
 //$container->offsetGet('pixiv')->download($name, __DIR__ . '/tmp/' . $name);
 //$container->offsetGet('tumblr')->download($name, __DIR__ . '/tmp/' . $name);
