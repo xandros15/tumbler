@@ -135,13 +135,13 @@ abstract class Tumbler
     {
         if ($realPath = realpath($directory)) {
             return $realPath . DIRECTORY_SEPARATOR;
-        } else {
-            if (!mkdir($directory, 744)) {
-                throw new \RuntimeException('Can\'t create new directory: ' . $directory);
-            }
-
-            return realpath($directory) . DIRECTORY_SEPARATOR;
         }
+
+        if (!mkdir($directory, 0744)) {
+            throw new \RuntimeException('Can\'t create new directory: ' . $directory);
+        }
+
+        return realpath($directory) . DIRECTORY_SEPARATOR;
     }
 
     /**
