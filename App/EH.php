@@ -26,7 +26,7 @@ final class EH extends Tumbler
         $directory = $this->createDirectory($directory);
 
         $gallery = $this->fetchHTML($galleryUrl);
-        $url = $this->getGalleryFirstPage($gallery);
+        $url = $this->getGalleryFirstPage($gallery) ?: $galleryUrl;
         while ($url) {
             $page = $this->fetchHTML($url);
             $this->saveMedia($this->getImageUrl($page), $directory . $this->getName($page));
@@ -41,7 +41,11 @@ final class EH extends Tumbler
      */
     private function getGalleryFirstPage(Crawler $gallery): string
     {
-        return $gallery->filter('#gdt a')->first()->link()->getUri();
+        try {
+            return $gallery->filter('#gdt a')->first()->link()->getUri();
+        } catch (\InvalidArgumentException $e) {
+            return '';
+        }
     }
 
     /**
