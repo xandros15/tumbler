@@ -3,7 +3,7 @@
 use Monolog\{ErrorHandler, Formatter\LineFormatter, Handler\StreamHandler, Logger, Registry};
 use Pimple\Container;
 use Symfony\Component\Yaml\Yaml;
-use Xandros15\Tumbler\Sites\{EH, H2R, HF, Pixiv, SC, Tumblr};
+use Xandros15\Tumbler\Sites\{EH, H2R, HF, Nijie, Pixiv, SC, SiteInterface, Tumblr};
 
 $container = new Container();
 
@@ -78,6 +78,13 @@ $container['mail'] = function (Container $container) {
 
 $container['h2r'] = function (): H2R {
     return new H2R();
+};
+
+$container['nijie'] = function (Container $container): SiteInterface {
+    return new Nijie(
+        $container['config']['nijie']['email'],
+        $container['config']['nijie']['password']
+    );
 };
 
 Registry::addLogger($container->offsetGet('logger'));
