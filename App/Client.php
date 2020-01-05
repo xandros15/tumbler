@@ -150,7 +150,11 @@ class Client
             'video/ogg' => '.ogg',
         ];
 
-        return $list[$contentType] ?? '';
+        if (isset($list[$contentType])) {
+            return $list[$contentType];
+        }
+
+        throw new InvalidMimeTypeException($contentType);
     }
 
     /**
