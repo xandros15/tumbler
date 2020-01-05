@@ -28,6 +28,19 @@ $container['logger'] = function (): Monolog\Logger {
     return $logger;
 };
 
+$container['logger_info'] = function (): Monolog\Logger {
+    $logger = new Logger('info');
+// Line formatter without empty brackets in the end
+    $formatter = new LineFormatter(null, null, false, false);
+
+    $stdoutHandler = new StreamHandler('php://output', Logger::INFO);
+    $stdoutHandler->setFormatter($formatter);
+
+    $logger->pushHandler($stdoutHandler);
+
+    return $logger;
+};
+
 $container['config'] = function (): array {
     return Yaml::parseFile(__DIR__ . '/config.yaml');
 };
@@ -72,6 +85,7 @@ $container['h2r'] = function (): H2R {
 };
 
 Registry::addLogger($container->offsetGet('logger'));
+Registry::addLogger($container->offsetGet('logger_info'));
 ErrorHandler::register($container->offsetGet('logger'));
 
 return $container;
