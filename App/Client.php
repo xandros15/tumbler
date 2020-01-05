@@ -86,7 +86,7 @@ class Client
         $this->sleep($options['sleep']);
         $this->getLogger()->debug("Connect: {$uri} | " . json_encode($options));
 
-        return $this->client->getClient()->request('get', $uri, $options);
+        return $this->client->getClient()->request($options['method'] ?? 'get', $uri, $options);
     }
 
     /**
