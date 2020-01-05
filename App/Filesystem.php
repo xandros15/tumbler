@@ -26,4 +26,18 @@ class Filesystem
 
         return realpath($directory) . DIRECTORY_SEPARATOR;
     }
+
+    /**
+     * @param string $name
+     *
+     * @return string
+     */
+    public static function cleanupName(string $name): string
+    {
+        $name = trim($name);
+        $name = str_replace(['\\', '/', ':', '"', '*', '?', '<', '>', '|'], '', $name);
+        $name = str_replace(' ', '_', $name);
+
+        return $name;
+    }
 }
