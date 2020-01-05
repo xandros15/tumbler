@@ -17,13 +17,9 @@ $container['logger'] = function (): Monolog\Logger {
 // Error level handler
     $errorHandler = new StreamHandler('error.log', Logger::ERROR);
     $errorHandler->setFormatter($formatter);
-    // STDOUT
-    $stdoutHandler = new StreamHandler('php://output', Logger::INFO);
-    $stdoutHandler->setFormatter($formatter);
 
     $logger->pushHandler($errorHandler);
     $logger->pushHandler($debugHandler);
-    $logger->pushHandler($stdoutHandler);
 
     return $logger;
 };
