@@ -49,14 +49,30 @@ final class HF implements SiteInterface
         if ($this->canSignup()) {
             $this->signup($page);
         }
+        //fetch pages
+        $this->log('Fetching pages...');
+        $pageCount = 0;
+        $imagesCount = 0;
+        $imagePages = [];
         while ($url) {
+            $pageCount++;
             $page = $this->client->fetchHTML($url);
+            $this->log("Page: $pageCount.");
             foreach ($this->getImageList($page, $url) as $thumb) {
-                $imagePage = $this->getImagePage($thumb);
-                $this->client->saveMedia($this->getImageSrc($imagePage), $directory . $this->getImageName($imagePage));
+                $imagesCount++;
+                $imagePages[] = $thumb;
             }
 
             $url = $this->getNextPage($page);
+        }
+
+        $this->log('Download Images...');
+        $downloaded = 0;
+        foreach ($imagePages as $page) {
+            $downloaded++;
+            $this->log("Image {$downloaded}/{$imagesCount}");
+            $imagePage = $this->getImagePage($page);
+            $this->client->saveMedia($this->getImageSrc($imagePage), $directory . $this->getImageName($imagePage));
         }
     }
 
@@ -106,10 +122,13 @@ final class HF implements SiteInterface
         $title = $imagePage->filter('#picBox .titleSemantic');
 
         if ($time->count() && $title->count()) {
+            $timestamp = strtotime($time->first()->attr('datetime'));
             $name = trim($title->first()->text());
+            $badCharacters = ['\\', '/', ':', '"', '*', '?', '<', '>', '|'];
+            $name = str_replace($badCharacters, '', $name);
             $name = str_replace(' ', '_', $name);
 
-            return $name . '_' . strtotime($time->first()->attr('datetime'));
+            return $timestamp . '_' . $name;
         }
 
         throw new RuntimeException('Missing date at page');
@@ -168,6 +187,14 @@ final class HF implements SiteInterface
         $form['LoginForm[username]'] = $this->username;
         $form['LoginForm[password]'] = $this->password;
         $this->client->sendForm($form);
-        Registry::getInstance('global')->info('Authorize by form');
+        $this->log('Authorize by form.');
+    }
+
+    /**
+     * @param string $message
+     */
+    private function log(string $message)
+    {
+        Registry::getInstance('info')->notice($message);
     }
 }
