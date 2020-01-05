@@ -1,6 +1,6 @@
 <?php
 
-namespace Xandros15\Tumbler\Tumblr;
+namespace Xandros15\Tumbler\Sites\Tumblr;
 
 
 use Traversable;

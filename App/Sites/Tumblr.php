@@ -5,8 +5,8 @@ namespace Xandros15\Tumbler\Sites;
 
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\Filesystem;
-use Xandros15\Tumbler\Tumblr\Post;
-use Xandros15\Tumbler\Tumblr\Repository;
+use Xandros15\Tumbler\Sites\Tumblr\Post;
+use Xandros15\Tumbler\Sites\Tumblr\Repository;
 
 final class Tumblr implements SiteInterface
 {
