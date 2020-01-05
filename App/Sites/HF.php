@@ -123,10 +123,7 @@ final class HF implements SiteInterface
 
         if ($time->count() && $title->count()) {
             $timestamp = strtotime($time->first()->attr('datetime'));
-            $name = trim($title->first()->text());
-            $badCharacters = ['\\', '/', ':', '"', '*', '?', '<', '>', '|'];
-            $name = str_replace($badCharacters, '', $name);
-            $name = str_replace(' ', '_', $name);
+            $name = Filesystem::cleanupName($title->first()->text());
 
             return $timestamp . '_' . $name;
         }
