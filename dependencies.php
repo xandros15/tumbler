@@ -27,7 +27,7 @@ $container['logger'] = function (): Monolog\Logger {
 $container['logger_info'] = function (): Monolog\Logger {
     $logger = new Logger('info');
 // Line formatter without empty brackets in the end
-    $formatter = new LineFormatter(null, null, false, false);
+    $formatter = new LineFormatter(null, null, false, true);
 
     $stdoutHandler = new StreamHandler('php://output', Logger::INFO);
     $stdoutHandler->setFormatter($formatter);
