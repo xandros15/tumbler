@@ -5,6 +5,7 @@ namespace Xandros15\Tumbler\Sites;
 
 
 use DOMElement;
+use Monolog\Registry;
 use stdClass;
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\Filesystem;
@@ -33,7 +34,9 @@ final class H2R implements SiteInterface
             /** @var $node DOMElement */
             if (strpos($node->textContent, 'var gData') !== false) {
                 $script = $this->parseScript($node->textContent);
+                $total = count($script->images);
                 foreach ($script->images as $key => $image) {
+                    $this->log('Image ' . ($key + 1) . '/' . $total);
                     $this->client->saveMedia(
                         self::BASE_URI_CDN . $image,
                         sprintf("%s/%03d", $directory, $key)
@@ -56,5 +59,13 @@ final class H2R implements SiteInterface
         $script = trim($script);
 
         return json_decode($script);
+    }
+
+    /**
+     * @param string $message
+     */
+    private function log(string $message)
+    {
+        Registry::getInstance('info')->notice($message);
     }
 }
