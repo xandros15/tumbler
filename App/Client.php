@@ -149,6 +149,7 @@ class Client
             'image/bmp' => '.bmp',
             'video/webm' => '.webm',
             'video/ogg' => '.ogg',
+            'application/octet-stream' => '.jpg',//ugh hf
         ];
 
         if (isset($list[$contentType])) {
