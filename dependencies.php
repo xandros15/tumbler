@@ -3,12 +3,12 @@
 use Monolog\{ErrorHandler, Formatter\LineFormatter, Handler\StreamHandler, Logger, Registry};
 use Pimple\Container;
 use Symfony\Component\Yaml\Yaml;
-use Xandros15\Tumbler\{EH, H2R, HF, Pixiv, SC, Tumblr};
+use Xandros15\Tumbler\Sites\{EH, H2R, HF, Pixiv, SC, Tumblr};
 
 $container = new Container();
 
 $container['logger'] = function (): Monolog\Logger {
-    $logger = new Logger('global' . microtime());
+    $logger = new Logger('global');
 // Line formatter without empty brackets in the end
     $formatter = new LineFormatter(null, null, false, true);
 // Debug level handler

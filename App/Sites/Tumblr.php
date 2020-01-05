@@ -1,16 +1,20 @@
 <?php
 
-namespace Xandros15\Tumbler;
+namespace Xandros15\Tumbler\Sites;
 
 
+use Xandros15\Tumbler\Client;
+use Xandros15\Tumbler\Filesystem;
 use Xandros15\Tumbler\Tumblr\Post;
 use Xandros15\Tumbler\Tumblr\Repository;
 
-final class Tumblr extends Tumbler
+final class Tumblr implements SiteInterface
 {
     private const BASE_URL = 'https://api.tumblr.com/v2/blog/{{blog_name}}.tumblr.com/posts';
     /** @var string */
     private $apiKey;
+    /** @var Client */
+    private $client;
 
     /**
      * Tumblr constructor.
@@ -20,6 +24,7 @@ final class Tumblr extends Tumbler
     public function __construct(string $apiKey)
     {
         $this->apiKey = $apiKey;
+        $this->client = new Client();
     }
 
     /**
@@ -28,7 +33,7 @@ final class Tumblr extends Tumbler
      */
     public function download(string $blogName, string $directory): void
     {
-        $directory = $this->createDirectory($directory);
+        $directory = Filesystem::createDirectory($directory);
         $uri = $this->getBaseUri($blogName);
         $this->downloadPhoto($uri, $directory);
         $this->downloadVideo($uri, $directory);
@@ -42,7 +47,7 @@ final class Tumblr extends Tumbler
     {
         $query = ['api_key' => $this->apiKey, 'type' => Post::PHOTO, 'offset' => 0, 'reblog_info' => 'true'];
         do {
-            $response = $this->fetch($uri, ['query' => $query]);
+            $response = $this->client->fetch($uri, ['query' => $query]);
             $repository = new Repository($response);
             foreach ($repository->getPosts() as $post) {
                 if ($post->isReblog()) {
@@ -50,7 +55,7 @@ final class Tumblr extends Tumbler
                 }
                 if ($post->hasMedia()) {
                     foreach ($post->getMedia() as $media) {
-                        $this->saveMedia($media->getRawUri(), $directory . $media->getName());
+                        $this->client->saveMedia($media->getRawUri(), $directory . $media->getName());
                     }
                 }
             }
@@ -66,7 +71,7 @@ final class Tumblr extends Tumbler
     {
         $query = ['api_key' => $this->apiKey, 'type' => Post::VIDEO, 'offset' => 0, 'reblog_info' => 'true'];
         do {
-            $response = $this->fetch($uri, ['query' => $query]);
+            $response = $this->client->fetch($uri, ['query' => $query]);
             $repository = new Repository($response);
             foreach ($repository->getPosts() as $post) {
                 if ($post->isReblog()) {
@@ -74,7 +79,7 @@ final class Tumblr extends Tumbler
                 }
                 if ($post->hasMedia()) {
                     foreach ($post->getMedia() as $media) {
-                        $this->saveMedia($media->getRawUri(), $directory . $media->getName());
+                        $this->client->saveMedia($media->getRawUri(), $directory . $media->getName());
                     }
                 }
             }

@@ -1,13 +1,18 @@
 <?php
 
-namespace Xandros15\Tumbler;
+namespace Xandros15\Tumbler\Sites;
 
 
 use InvalidArgumentException;
 use Symfony\Component\DomCrawler\Crawler;
+use Xandros15\Tumbler\Client;
+use Xandros15\Tumbler\Filesystem;
 
-final class EH extends Tumbler
+final class EH implements SiteInterface
 {
+    /** @var Client */
+    private $client;
+
     /**
      * EH constructor.
      *
@@ -15,7 +20,8 @@ final class EH extends Tumbler
      */
     public function __construct(string $cookie)
     {
-        $this->setHeader('Cookie', $cookie);
+        $this->client = new Client();
+        $this->client->setHeader('Cookie', $cookie);
     }
 
     /**
@@ -24,13 +30,13 @@ final class EH extends Tumbler
      */
     function download(string $galleryUrl, string $directory): void
     {
-        $directory = $this->createDirectory($directory);
+        $directory = Filesystem::createDirectory($directory);
 
-        $gallery = $this->fetchHTML($galleryUrl);
+        $gallery = $this->client->fetchHTML($galleryUrl);
         $url = $this->getGalleryFirstPage($gallery) ?: $galleryUrl;
         while ($url) {
-            $page = $this->fetchHTML($url);
-            $this->saveMedia($this->getImageUrl($page), $directory . $this->getName($page));
+            $page = $this->client->fetchHTML($url);
+            $this->client->saveMedia($this->getImageUrl($page), $directory . $this->getName($page));
             $url = $this->getNextPage($page, $url);
         }
     }

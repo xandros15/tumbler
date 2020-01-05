@@ -1,12 +1,17 @@
 <?php
 
-namespace Xandros15\Tumbler;
+namespace Xandros15\Tumbler\Sites;
 
 
+use Exception;
+use Monolog\Registry;
 use PixivAPI;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Xandros15\Tumbler\Client;
+use Xandros15\Tumbler\Filesystem;
 
-final class Pixiv extends Tumbler
+final class Pixiv implements SiteInterface
 {
     private const AUTH_ERROR = 'The access token provided is invalid.';
     private const START_PAGE = 1;
@@ -21,27 +26,34 @@ final class Pixiv extends Tumbler
     private $username;
     /** @var string */
     private $password;
+    /** @var Client */
+    private $client;
 
     /**
      * Pixiv constructor.
      *
      * @param string $username
      * @param string $password
+     *
+     * @throws Exception
      */
     public function __construct(string $username, string $password)
     {
         $this->api = new PixivAPI();
         $this->username = $username;
         $this->password = $password;
+        $this->client = new Client();
     }
 
     /**
      * @param string $user_id
      * @param string $directory
+     *
+     * @throws Exception
      */
     public function download(string $user_id, string $directory): void
     {
-        $directory = $this->createDirectory($directory);
+        $directory = Filesystem::createDirectory($directory);
         $page = self::START_PAGE;
         while (1) {
             $response = $this->api->users_works($user_id, $page);
@@ -56,7 +68,7 @@ final class Pixiv extends Tumbler
                 if ($work['page_count'] > 1) {
                     $this->createGallery($name, $work['image_urls']['large'], $work['page_count']);
                 } else {
-                    $this->saveMedia($work['image_urls']['large'], $name);
+                    $this->client->saveMedia($work['image_urls']['large'], $name);
                 }
             }
             if ($response['pagination']['pages'] < ++$page) {
@@ -88,7 +100,7 @@ final class Pixiv extends Tumbler
     }
 
     /**
-     * @throws RuntimeException
+     * @throws RuntimeException|Exception
      */
     private function authorization(): void
     {
@@ -113,7 +125,15 @@ final class Pixiv extends Tumbler
     {
         for ($index = 0; $index < $count; $index++) {
             $url = $this->changeImagePage($url, $index);
-            $this->saveMedia($url, $name . '_' . ($index + 1));
+            $this->client->saveMedia($url, $name . '_' . ($index + 1));
         }
+    }
+
+    /**
+     * @return LoggerInterface
+     */
+    private function getLogger(): LoggerInterface
+    {
+        return Registry::getInstance('global');
     }
 }

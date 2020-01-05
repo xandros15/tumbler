@@ -1,13 +1,16 @@
 <?php
 
-namespace Xandros15\Tumbler;
+namespace Xandros15\Tumbler\Sites;
 
 
+use Monolog\Registry;
 use RuntimeException;
 use Symfony\Component\DomCrawler\Crawler;
 use Traversable;
+use Xandros15\Tumbler\Client;
+use Xandros15\Tumbler\Filesystem;
 
-final class HF extends Tumbler
+final class HF implements SiteInterface
 {
     private const BASE_URL = 'http://www.hentai-foundry.com';
     private const PICTURES_ENDPOINT = '/pictures/user/';
@@ -16,6 +19,8 @@ final class HF extends Tumbler
     private $username;
     /** @var string */
     private $password;
+    /** @var Client */
+    private $client;
 
     /**
      * HF constructor.
@@ -27,6 +32,8 @@ final class HF extends Tumbler
     {
         $this->username = $username;
         $this->password = $password;
+
+        $this->client = new Client();
     }
 
     /**
@@ -36,17 +43,17 @@ final class HF extends Tumbler
     public function download(string $ident, string $directory): void
     {
         $url = self::BASE_URL . self::PICTURES_ENDPOINT . $ident;
-        $directory = $this->createDirectory($directory);
-        $page = $this->fetchHTML($url);
+        $directory = Filesystem::createDirectory($directory);
+        $page = $this->client->fetchHTML($url);
         $page = $this->passRestrictionPage($page);
         if ($this->canSignup()) {
             $this->signup($page);
         }
         while ($url) {
-            $page = $this->fetchHTML($url);
+            $page = $this->client->fetchHTML($url);
             foreach ($this->getImageList($page, $url) as $thumb) {
                 $imagePage = $this->getImagePage($thumb);
-                $this->saveMedia($this->getImageSrc($imagePage), $directory . $this->getImageName($imagePage));
+                $this->client->saveMedia($this->getImageSrc($imagePage), $directory . $this->getImageName($imagePage));
             }
 
             $url = $this->getNextPage($page);
@@ -60,7 +67,7 @@ final class HF extends Tumbler
      */
     private function getImagePage(Crawler $thumb): Crawler
     {
-        return $this->fetchHTML($thumb->link()->getUri());
+        return $this->client->fetchHTML($thumb->link()->getUri());
     }
 
     /**
@@ -96,9 +103,13 @@ final class HF extends Tumbler
     private function getImageName(Crawler $imagePage): string
     {
         $time = $imagePage->filter('#yw0 time');
+        $title = $imagePage->filter('#picBox .titleSemantic');
 
-        if ($time->count()) {
-            return strtotime($time->first()->attr('datetime'));
+        if ($time->count() && $title->count()) {
+            $name = trim($title->first()->text());
+            $name = str_replace(' ', '_', $name);
+
+            return $name . '_' . strtotime($time->first()->attr('datetime'));
         }
 
         throw new RuntimeException('Missing date at page');
@@ -137,7 +148,7 @@ final class HF extends Tumbler
     {
         $link = $page->filter('#frontPage_link');
 
-        return $link->count() ? $this->fetchHTML($link->first()->link()->getUri()) : $page;
+        return $link->count() ? $this->client->fetchHTML($link->first()->link()->getUri()) : $page;
     }
 
     /**
@@ -156,7 +167,7 @@ final class HF extends Tumbler
         $form = $page->selectButton('Login')->form();
         $form['LoginForm[username]'] = $this->username;
         $form['LoginForm[password]'] = $this->password;
-        $this->getClient()->submit($form);
-        $this->getLogger()->info('Authorize by form');
+        $this->client->sendForm($form);
+        Registry::getInstance('global')->info('Authorize by form');
     }
 }

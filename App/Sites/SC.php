@@ -1,16 +1,20 @@
 <?php
 
-namespace Xandros15\Tumbler;
+namespace Xandros15\Tumbler\Sites;
 
 
 use Symfony\Component\DomCrawler\Crawler;
 use Traversable;
+use Xandros15\Tumbler\Client;
+use Xandros15\Tumbler\Filesystem;
 
-final class SC extends Tumbler
+final class SC implements SiteInterface
 {
-    protected const SLEEP = [1000000, 1500000];
+    private const SLEEP = [1000000, 1500000];
     private const START_PAGE = 1;
     private const BASE_URL = 'http://chan.sankakucomplex.com';
+    /** @var Client */
+    private $client;
 
     /**
      * SC constructor.
@@ -19,7 +23,8 @@ final class SC extends Tumbler
      */
     public function __construct(string $cookie)
     {
-        $this->setHeader('Cookie', $cookie);
+        $this->client = new Client();
+        $this->client->setHeader('Cookie', $cookie);
     }
 
     /**
@@ -29,16 +34,16 @@ final class SC extends Tumbler
     public function download(string $ident, string $directory): void
     {
         $url = self::BASE_URL . '?' . http_build_query(['tags' => $ident, 'page' => self::START_PAGE]);
-        $directory = $this->createDirectory($directory);
+        $directory = Filesystem::createDirectory($directory);
         $name = '';
         $index = 1;
         while ($url) {
-            $page = $this->fetchHTML($url);
+            $page = $this->client->fetchHTML($url, ['sleep' => self::SLEEP]);
             foreach ($this->getImageList($page) as $thumb) {
                 $imagePage = $this->getImagePage($thumb);
                 $imageUrl = $this->getImageUrl($imagePage);
                 $name = $this->getName($imagePage, $name, $index);
-                $this->saveMedia($imageUrl, $directory . $name);
+                $this->client->saveMedia($imageUrl, $directory . $name, ['sleep' => self::SLEEP]);
             }
             $url = $this->getNextPage($page);
         }
@@ -66,7 +71,7 @@ final class SC extends Tumbler
     {
         $link = $page->filter('a')->first()->link();
 
-        return $this->fetchHTML($link->getUri());
+        return $this->client->fetchHTML($link->getUri(), ['sleep' => self::SLEEP]);
     }
 
     /**
