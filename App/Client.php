@@ -96,10 +96,9 @@ class Client
      */
     public function saveMedia(string $url, string $name, array $options = []): void
     {
-        $badCharacters = ['\\', '/', ':', '"', '*', '?', '<', '>', '|'];
         $image = $this->fetch($url, $options);
         $contentType = $image->getHeaderLine('content-type');
-        $filename = str_replace($badCharacters, '', $name) . $this->resolveExtension($contentType);
+        $filename = $name . $this->resolveExtension($contentType);
         if (!file_exists($filename) || !empty($options['override'])) {
             file_put_contents($filename, (string) $image->getBody());
         }
