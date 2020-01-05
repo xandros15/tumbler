@@ -4,6 +4,7 @@ namespace Xandros15\Tumbler;
 
 
 use Symfony\Component\DomCrawler\Crawler;
+use Traversable;
 
 final class SC extends Tumbler
 {
@@ -46,9 +47,9 @@ final class SC extends Tumbler
     /**
      * @param Crawler $page
      *
-     * @return \Traversable
+     * @return Traversable
      */
-    private function getImageList(Crawler $page): \Traversable
+    private function getImageList(Crawler $page): Traversable
     {
         $thumbs = $page->filter('.content > div > .thumb');
         foreach ($thumbs as $thumb) {

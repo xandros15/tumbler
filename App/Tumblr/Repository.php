@@ -4,6 +4,7 @@ namespace Xandros15\Tumbler\Tumblr;
 
 
 use Psr\Http\Message\ResponseInterface;
+use Traversable;
 
 final class Repository
 {
@@ -36,9 +37,9 @@ final class Repository
     }
 
     /**
-     * @return \Traversable|Post[]
+     * @return Traversable|Post[]
      */
-    public function getPosts(): \Traversable
+    public function getPosts(): Traversable
     {
         return $this->posts;
     }
@@ -46,9 +47,9 @@ final class Repository
     /**
      * @param array $posts
      *
-     * @return \Traversable|Post[]
+     * @return Traversable|Post[]
      */
-    private function setupPosts(array $posts): \Traversable
+    private function setupPosts(array $posts): Traversable
     {
         foreach ($posts as $post) {
             yield new Post($post);

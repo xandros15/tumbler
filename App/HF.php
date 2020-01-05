@@ -3,7 +3,9 @@
 namespace Xandros15\Tumbler;
 
 
+use RuntimeException;
 use Symfony\Component\DomCrawler\Crawler;
+use Traversable;
 
 final class HF extends Tumbler
 {
@@ -65,9 +67,9 @@ final class HF extends Tumbler
      * @param Crawler $page
      * @param string $currentUri
      *
-     * @return \Traversable
+     * @return Traversable
      */
-    private function getImageList(Crawler $page, string $currentUri): \Traversable
+    private function getImageList(Crawler $page, string $currentUri): Traversable
     {
         foreach ($page->filter('.thumbLink') as $thumb) {
             yield new Crawler($thumb, $currentUri);
@@ -99,7 +101,7 @@ final class HF extends Tumbler
             return strtotime($time->first()->attr('datetime'));
         }
 
-        throw new \RuntimeException('Missing date at page');
+        throw new RuntimeException('Missing date at page');
     }
 
     /**

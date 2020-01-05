@@ -3,6 +3,8 @@
 namespace Xandros15\Tumbler\Tumblr;
 
 
+use Traversable;
+
 final class Post
 {
     const VIDEO = 'video';
@@ -34,9 +36,9 @@ final class Post
     }
 
     /**
-     * @return Media[]|\Traversable
+     * @return Media[]|Traversable
      */
-    public function getMedia(): \Traversable
+    public function getMedia(): Traversable
     {
         $name = strtotime($this->params['date']);
         $counter = 0;

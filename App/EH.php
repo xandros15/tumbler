@@ -3,6 +3,7 @@
 namespace Xandros15\Tumbler;
 
 
+use InvalidArgumentException;
 use Symfony\Component\DomCrawler\Crawler;
 
 final class EH extends Tumbler
@@ -43,7 +44,7 @@ final class EH extends Tumbler
     {
         try {
             return $gallery->filter('#gdt a')->first()->link()->getUri();
-        } catch (\InvalidArgumentException $e) {
+        } catch (InvalidArgumentException $e) {
             return '';
         }
     }

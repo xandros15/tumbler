@@ -3,6 +3,9 @@
 namespace Xandros15\Tumbler;
 
 
+use PixivAPI;
+use RuntimeException;
+
 final class Pixiv extends Tumbler
 {
     private const AUTH_ERROR = 'The access token provided is invalid.';
@@ -10,7 +13,7 @@ final class Pixiv extends Tumbler
     protected $headers = [
         'Referer' => 'http://www.pixiv.net/',
     ];
-    /** @var \PixivAPI */
+    /** @var PixivAPI */
     private $api;
     /** @var  string */
     private $refreshToken;
@@ -27,7 +30,7 @@ final class Pixiv extends Tumbler
      */
     public function __construct(string $username, string $password)
     {
-        $this->api = new \PixivAPI();
+        $this->api = new PixivAPI();
         $this->username = $username;
         $this->password = $password;
     }
@@ -85,7 +88,7 @@ final class Pixiv extends Tumbler
     }
 
     /**
-     * @throws \RuntimeException
+     * @throws RuntimeException
      */
     private function authorization(): void
     {
@@ -97,7 +100,7 @@ final class Pixiv extends Tumbler
             $this->api->login($this->username, $this->password);
             $this->refreshToken = $this->api->getRefreshToken();
         } else {
-            throw new \RuntimeException('Missing authorization');
+            throw new RuntimeException('Missing authorization');
         }
     }
 

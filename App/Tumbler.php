@@ -8,6 +8,7 @@ use GuzzleHttp\RequestOptions;
 use Monolog\Registry;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
+use RuntimeException;
 use Symfony\Component\DomCrawler\Crawler;
 
 abstract class Tumbler
@@ -23,11 +24,13 @@ abstract class Tumbler
     ];
 
     private const DEFAULT_HEADERS = [
-        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:51.0) Gecko/20100101 Firefox/51.0',
+        'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:57.0) Gecko/20100101 Firefox/57.0',
         'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language' => 'pl,en-US;q=0.7,en;q=0.3',
+        'Accept-Language' => 'en-US,en;q=0.5',
+        'Pragma' => 'no-cache',
         'Connection' => 'keep-alive',
-//            'Accept-Encoding' => 'gzip, deflate, br',
+        'Cache-Control' => 'no-cache',
+        'Accept-Encoding' => 'gzip, deflate',
         'Upgrade-Insecure-Requests' => 1,
         'DNT' => 1,
     ];
@@ -59,7 +62,7 @@ abstract class Tumbler
      * @param string $uri
      * @param array $options
      *
-     * @return \Symfony\Component\DomCrawler\Crawler
+     * @return Crawler
      */
     protected function fetchHTML(string $uri, array $options = []): Crawler
     {
@@ -128,8 +131,8 @@ abstract class Tumbler
     /**
      * @param string $directory
      *
-     * @throws \RuntimeException
      * @return string
+     * @throws RuntimeException
      */
     protected function createDirectory(string $directory): string
     {
@@ -137,8 +140,8 @@ abstract class Tumbler
             return $realPath . DIRECTORY_SEPARATOR;
         }
 
-        if (!mkdir($directory, 0744)) {
-            throw new \RuntimeException('Can\'t create new directory: ' . $directory);
+        if (!mkdir($directory, 0744, true)) {
+            throw new RuntimeException('Can\'t create new directory: ' . $directory);
         }
 
         return realpath($directory) . DIRECTORY_SEPARATOR;
