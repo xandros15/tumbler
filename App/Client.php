@@ -68,7 +68,7 @@ class Client
             $this->client->setHeader($name, $value);
         }
         $this->sleep($options['sleep']);
-        $this->getLogger()->info("Connect: {$uri} | " . json_encode($options));
+        $this->getLogger()->debug("Connect: {$uri} | " . json_encode($options));
 
         return $this->client->request('get', $uri, $options['query'] ?? []);
     }
@@ -84,7 +84,7 @@ class Client
         $options['sleep'] = $options['sleep'] ?? self::DEFAULT_SLEEP;
         $options['headers'] = $this->prepareHeaders($options['headers'] ?? []);
         $this->sleep($options['sleep']);
-        $this->getLogger()->info("Connect: {$uri} | " . json_encode($options));
+        $this->getLogger()->debug("Connect: {$uri} | " . json_encode($options));
 
         return $this->client->getClient()->request('get', $uri, $options);
     }
