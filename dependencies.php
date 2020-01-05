@@ -2,6 +2,7 @@
 
 use Monolog\{ErrorHandler, Formatter\LineFormatter, Handler\StreamHandler, Logger, Registry};
 use Pimple\Container;
+use Symfony\Component\Yaml\Yaml;
 use Xandros15\Tumbler\{EH, H2R, HF, Pixiv, SC, Tumblr};
 
 $container = new Container();
@@ -28,7 +29,7 @@ $container['logger'] = function (): Monolog\Logger {
 };
 
 $container['config'] = function (): array {
-    return require_once __DIR__ . '/config.php';
+    return Yaml::parseFile(__DIR__ . '/config.yaml');
 };
 
 $container['pixiv'] = function (Container $container): Pixiv {

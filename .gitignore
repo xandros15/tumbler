@@ -1,4 +1,5 @@
 config.php
+config.yaml
 debug.log
 error.log
 vendor
