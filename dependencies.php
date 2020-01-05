@@ -41,26 +41,26 @@ $container['config'] = function (): array {
     return Yaml::parseFile(__DIR__ . '/config.yaml');
 };
 
-$container['pixiv'] = function (Container $container): Pixiv {
+$container['pixiv'] = function (Container $container): SiteInterface {
     return new Pixiv(
         $container['config']['pixiv']['username'],
         $container['config']['pixiv']['password']
     );
 };
 
-$container['tumblr'] = function (Container $container): Tumblr {
+$container['tumblr'] = function (Container $container): SiteInterface {
     return new Tumblr($container['config']['tumblr']['api_key']);
 };
 
-$container['sc'] = function (Container $container): SC {
+$container['sc'] = function (Container $container): SiteInterface {
     return new SC($container['config']['sc']['cookie']);
 };
 
-$container['eh'] = function (Container $container): EH {
+$container['eh'] = function (Container $container): SiteInterface {
     return new EH($container['config']['eh']['cookie']);
 };
 
-$container['hf'] = function (Container $container): HF {
+$container['hf'] = function (Container $container): SiteInterface {
     return new HF(
         $container['config']['hf']['username'],
         $container['config']['hf']['password']
@@ -76,7 +76,7 @@ $container['mail'] = function (Container $container) {
     return new Swift_Mailer($smtp);
 };
 
-$container['h2r'] = function (): H2R {
+$container['h2r'] = function (): SiteInterface {
     return new H2R();
 };
 
