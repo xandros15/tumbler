@@ -49,9 +49,10 @@ final class Nijie implements SiteInterface
      */
     public function download(string $ident, string $directory): void
     {
-        $directory = Filesystem::createDirectory($directory);
         $this->signup();
-
+        $name = $this->getIllustratorName($ident);
+        $name = Filesystem::cleanupName($name);
+        $directory = Filesystem::createDirectory($directory . '/' . $name);
         $worksCount = 0;
         $imagesCount = 0;
         Logger::info('Fetching works...');
@@ -166,5 +167,17 @@ final class Nijie implements SiteInterface
         }
         $dump = Yaml::dump($data, 4, 4);
         file_put_contents($directory . 'info-' . date('Ymd') . '.yaml', $dump);
+    }
+
+    /**
+     * @param int $ident
+     *
+     * @return string
+     */
+    private function getIllustratorName(int $ident): string
+    {
+        $url = self::ILLUSTRATION_PAGE . '?' . http_build_query(['id' => $ident]);
+
+        return trim($this->client->fetchHTML($url)->filter('#pro .name')->text());
     }
 }

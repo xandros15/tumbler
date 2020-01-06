@@ -58,11 +58,13 @@ final class Pixiv implements SiteInterface
         $works = [];
         $worksCount = 0;
         $imagesCount = 0;
+        $userName = '';
         while (1) {
             $response = $this->api->works($user_id, $page);
             Logger::info("Page: {$page}");
 
             foreach ($response['response'] as $work) {
+                $userName = $work['user']['name'];
                 $work = new Work($work);
                 $works[] = $work;
                 $worksCount++;
@@ -75,6 +77,8 @@ final class Pixiv implements SiteInterface
         Logger::info('Total works: ' . $worksCount);
         Logger::info('Total images: ' . $imagesCount);
         Logger::info('Download images...');
+        $name = Filesystem::cleanupName($userName);
+        $directory = Filesystem::createDirectory($directory . $name);
         foreach ($works as $i => $work) {
             Logger::info('Work ' . ($i + 1) . '/' . $worksCount);
             $this->downloadImages($work, $directory);
