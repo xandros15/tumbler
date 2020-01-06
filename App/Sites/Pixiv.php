@@ -4,9 +4,9 @@ namespace Xandros15\Tumbler\Sites;
 
 
 use Exception;
-use Monolog\Registry;
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\Filesystem;
+use Xandros15\Tumbler\Logger;
 use Xandros15\Tumbler\Sites\Pixiv\PixivClient;
 
 final class Pixiv implements SiteInterface
@@ -50,15 +50,15 @@ final class Pixiv implements SiteInterface
     {
         $directory = Filesystem::createDirectory($directory);
         $page = self::START_PAGE;
-        $this->log('Login...');
+        Logger::info('Login...');
         $this->api->loginByCredentials($this->username, $this->password);
-        $this->log('Fetching works...');
+        Logger::info('Fetching works...');
         while (1) {
             $response = $this->api->works($user_id, $page);
-            $this->log("Page {$page}.");
+            Logger::info("Page {$page}.");
 
             foreach ($response['response'] as $work) {
-                $this->log("Work {$work['id']}.");
+                Logger::info("Work {$work['id']}.");
                 $this->saveWorkImages($directory, $work);
             }
             if ($response['pagination']['pages'] < ++$page) {
@@ -66,14 +66,6 @@ final class Pixiv implements SiteInterface
                 break;
             }
         }
-    }
-
-    /**
-     * @param string $message
-     */
-    private function log(string $message): void
-    {
-        Registry::getInstance('info')->info($message);
     }
 
     /**
@@ -88,13 +80,13 @@ final class Pixiv implements SiteInterface
                 $name = Filesystem::cleanupName($name);
                 $url = $this->changeImagePage($work['image_urls']['large'], $index);
                 $this->client->saveMedia($url, $directory . $name, ['headers' => self::HEADERS]);
-                $this->log('Image ' . ($index + 1) . '/' . $work['page_count']);
+                Logger::info('Image ' . ($index + 1) . '/' . $work['page_count']);
             }
         } else {
             $name = $work['id'] . '_' . $work['title'];
             $name = Filesystem::cleanupName($name);
             $this->client->saveMedia($work['image_urls']['large'], $directory . $name, ['headers' => self::HEADERS]);
-            $this->log('Image 1/1');
+            Logger::info('Image 1/1');
         }
     }
 

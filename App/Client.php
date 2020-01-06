@@ -6,9 +6,7 @@ namespace Xandros15\Tumbler;
 
 use Exception;
 use GuzzleHttp\RequestOptions;
-use Monolog\Registry;
 use Psr\Http\Message\ResponseInterface;
-use Psr\Log\LoggerInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\Form;
 
@@ -68,7 +66,7 @@ class Client
             $this->client->setHeader($name, $value);
         }
         $this->sleep($options['sleep']);
-        $this->getLogger()->debug("Connect: {$uri} | " . json_encode($options));
+        Logger::debug('Connect: ' . $uri, $options);
 
         return $this->client->request('get', $uri, $options['query'] ?? []);
     }
@@ -84,7 +82,7 @@ class Client
         $options['sleep'] = $options['sleep'] ?? self::DEFAULT_SLEEP;
         $options['headers'] = $this->prepareHeaders($options['headers'] ?? []);
         $this->sleep($options['sleep']);
-        $this->getLogger()->debug("Connect: {$uri} | " . json_encode($options));
+        Logger::debug('Connect: ' . $uri, $options);
 
         return $this->client->getClient()->request($options['method'] ?? 'get', $uri, $options);
     }
@@ -123,14 +121,6 @@ class Client
         } catch (Exception $exception) {
             usleep(max($times));
         }
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    private function getLogger(): LoggerInterface
-    {
-        return Registry::getInstance('global');
     }
 
     /**

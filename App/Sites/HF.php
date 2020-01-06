@@ -3,12 +3,12 @@
 namespace Xandros15\Tumbler\Sites;
 
 
-use Monolog\Registry;
 use RuntimeException;
 use Symfony\Component\DomCrawler\Crawler;
 use Traversable;
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\Filesystem;
+use Xandros15\Tumbler\Logger;
 
 final class HF implements SiteInterface
 {
@@ -50,14 +50,14 @@ final class HF implements SiteInterface
             $this->signup($page);
         }
         //fetch pages
-        $this->log('Fetching pages...');
+        Logger::info('Fetching pages...');
         $pageCount = 0;
         $imagesCount = 0;
         $imagePages = [];
         while ($url) {
             $pageCount++;
             $page = $this->client->fetchHTML($url);
-            $this->log("Page: $pageCount.");
+            Logger::info("Page: $pageCount.");
             foreach ($this->getImageList($page, $url) as $thumb) {
                 $imagesCount++;
                 $imagePages[] = $thumb;
@@ -66,11 +66,11 @@ final class HF implements SiteInterface
             $url = $this->getNextPage($page);
         }
 
-        $this->log('Download Images...');
+        Logger::info('Download Images...');
         $downloaded = 0;
         foreach ($imagePages as $page) {
             $downloaded++;
-            $this->log("Image {$downloaded}/{$imagesCount}");
+            Logger::info("Image {$downloaded}/{$imagesCount}");
             $imagePage = $this->getImagePage($page);
             $this->client->saveMedia($this->getImageSrc($imagePage), $directory . $this->getImageName($imagePage));
         }
@@ -184,14 +184,6 @@ final class HF implements SiteInterface
         $form['LoginForm[username]'] = $this->username;
         $form['LoginForm[password]'] = $this->password;
         $this->client->sendForm($form);
-        $this->log('Authorize by form.');
-    }
-
-    /**
-     * @param string $message
-     */
-    private function log(string $message)
-    {
-        Registry::getInstance('info')->notice($message);
+        Logger::info('Authorize by form.');
     }
 }

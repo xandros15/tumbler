@@ -3,12 +3,13 @@
 use Monolog\{ErrorHandler, Formatter\LineFormatter, Handler\StreamHandler, Logger, Registry};
 use Pimple\Container;
 use Symfony\Component\Yaml\Yaml;
+use Xandros15\Tumbler\Logger as StaticLogger;
 use Xandros15\Tumbler\Sites\{EH, H2R, HF, Nijie, Pixiv, SC, SiteInterface, Tumblr};
 
 $container = new Container();
 
 $container['logger'] = function (): Monolog\Logger {
-    $logger = new Logger('global');
+    $logger = new Logger(StaticLogger::INSTANCE_NAME);
 // Line formatter without empty brackets in the end
     $formatter = new LineFormatter(null, null, false, true);
 // Debug level handler
@@ -18,24 +19,11 @@ $container['logger'] = function (): Monolog\Logger {
     $errorHandler = new StreamHandler('error.log', Logger::ERROR);
     $errorHandler->setFormatter($formatter);
 
-    $stdoutHandler = new StreamHandler('php://output', Logger::ERROR);
+    $stdoutHandler = new StreamHandler('php://output', Logger::INFO);
     $stdoutHandler->setFormatter($formatter);
 
     $logger->pushHandler($errorHandler);
     $logger->pushHandler($debugHandler);
-    $logger->pushHandler($stdoutHandler);
-
-    return $logger;
-};
-
-$container['logger_info'] = function (): Monolog\Logger {
-    $logger = new Logger('info');
-// Line formatter without empty brackets in the end
-    $formatter = new LineFormatter(null, null, false, true);
-
-    $stdoutHandler = new StreamHandler('php://output', Logger::INFO);
-    $stdoutHandler->setFormatter($formatter);
-
     $logger->pushHandler($stdoutHandler);
 
     return $logger;
@@ -92,7 +80,6 @@ $container['nijie'] = function (Container $container): SiteInterface {
 };
 
 Registry::addLogger($container->offsetGet('logger'));
-Registry::addLogger($container->offsetGet('logger_info'));
 ErrorHandler::register($container->offsetGet('logger'));
 
 return $container;

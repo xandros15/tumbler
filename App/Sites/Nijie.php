@@ -4,10 +4,10 @@ namespace Xandros15\Tumbler\Sites;
 
 
 use Exception;
-use Monolog\Registry;
 use Symfony\Component\DomCrawler\Crawler;
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\Filesystem;
+use Xandros15\Tumbler\Logger;
 use Xandros15\Tumbler\Sites\Nijie\Post;
 use Xandros15\Tumbler\UnauthorizedException;
 
@@ -48,14 +48,14 @@ final class Nijie implements SiteInterface
     {
         $directory = Filesystem::createDirectory($directory);
         $this->signup();
-        $this->log('Fetching pages...');
+        Logger::info('Fetching pages...');
         $posts = $this->fetchIllustrationPages($ident);
         //post has many images
-        $this->log('Fetching posts...');
+        Logger::info('Fetching posts...');
         $posts = $this->fetchImages($posts);
-        $this->log('Download images...');
+        Logger::info('Download images...');
         $this->downloadImages($posts, $directory);
-        $this->log('Done \o/.');
+        Logger::info('Done \o/.');
     }
 
     /**
@@ -68,7 +68,7 @@ final class Nijie implements SiteInterface
         $postCount = count($posts);
         foreach ($posts as $post) {
             $postDownloaded++;
-            $this->log("Post {$postDownloaded}/{$postCount}");
+            Logger::info("Post {$postDownloaded}/{$postCount}");
             $images = $post->getImages();
             $imagesCount = count($images);
             if ($imagesCount > 1) {
@@ -76,13 +76,13 @@ final class Nijie implements SiteInterface
                     $name = $post->getId() . '_' . $k . '_' . $post->getName();
                     $name = Filesystem::cleanupName($name);
 
-                    $this->log('Image ' . (1 + $k) . '/' . $imagesCount);
+                    Logger::info('Image ' . (1 + $k) . '/' . $imagesCount);
                     $this->client->saveMedia($image, $directory . '/' . $name);
                 }
             } else {
                 $name = $post->getId() . '_' . $post->getName();
                 $name = Filesystem::cleanupName($name);
-                $this->log('Image 1/' . $imagesCount);
+                Logger::info('Image 1/' . $imagesCount);
                 $this->client->saveMedia($images[0], $directory . '/' . $name);
             }
         }
@@ -97,7 +97,7 @@ final class Nijie implements SiteInterface
     {
         $postCount = 0;
         foreach ($posts as $post) {
-            $this->log('Post ' . ++$postCount);
+            Logger::info('Post ' . ++$postCount);
             $page = $this->client->fetchHTML($post->getPopupUrl());
             $images = $page->filterXPath('//div[starts-with(@id,\'diff_\')]//img')->each(function (Crawler $img) {
                 return 'https:' . ($img->attr('data-original') ?? $img->attr('src'));
@@ -123,7 +123,7 @@ final class Nijie implements SiteInterface
         $pageNumber = 0;
         $posts = [];
         while (1) {
-            $this->log('Page ' . ++$pageNumber);
+            Logger::info('Page ' . ++$pageNumber);
             $page = $this->client->fetchHTML($url);
             $page->filter('.nijie .mozamoza.ngtag')->each(function (Crawler $post) use (&$posts) {
                 $posts[] = new Post($post);
@@ -151,17 +151,9 @@ final class Nijie implements SiteInterface
         $form['password'] = $this->password;
         $responsePage = $this->client->sendForm($form);
         if ($responsePage->filter('#pro')->count() > 0) { //check if is profile div
-            $this->log('Authorize by form.');
+            Logger::info('Authorize by form.');
         } else {
             throw new UnauthorizedException();
         }
-    }
-
-    /**
-     * @param string $message
-     */
-    private function log(string $message)
-    {
-        Registry::getInstance('info')->notice($message);
     }
 }
