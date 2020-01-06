@@ -41,11 +41,21 @@ final class EH implements SiteInterface
         Logger::info('Downloading images...');
         $folderName = Filesystem::cleanupName($gallery->filter('#gn')->text());
         $directory = Filesystem::createDirectory($directory . '/' . $folderName);
+        $media = [];
         foreach ($images as $i => $image) {
             $name = Filesystem::cleanupName($image->getName());
-            $this->client->saveMedia($image->getSource(), $directory . $name);
-            Logger::info('Image ' . ($i + 1) . '/' . $imagesCount);
+            $media[] = [
+                'url' => $image->getSource(),
+                'name' => $directory . $name,
+            ];
         }
+        $done = 0;
+        $this->client->saveBatchMedia($media, [
+            'fulfilled' => function () use ($imagesCount, &$done) {
+                Logger::info('Image ' . ++$done . '/' . $imagesCount);
+            },
+        ]);
+
         Logger::info('Done \o/.');
     }
 

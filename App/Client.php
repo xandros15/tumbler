@@ -5,6 +5,8 @@ namespace Xandros15\Tumbler;
 
 
 use Exception;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\DomCrawler\Crawler;
@@ -100,6 +102,34 @@ class Client
         if (!file_exists($filename) || !empty($options['override'])) {
             file_put_contents($filename, (string) $image->getBody());
         }
+    }
+
+    /**
+     * @param array $media
+     * @param array $options
+     */
+    public function saveBatchMedia(array $media, array $options = []): void
+    {
+        $requests = [];
+        $options['headers'] = $this->prepareHeaders($options['headers'] ?? []);
+        foreach ($media as $item) {
+            $requests[] = new Request('GET', $item['url'], $options['headers']);
+        }
+
+        Pool::batch($this->client->getClient(), $requests, array_merge($options, [
+            'concurrency' => 5,
+            'fulfilled' => function (ResponseInterface $response, int $index) use ($media, $options) {
+                Logger::debug('Batch connect: ' . $media[$index]['url'], $options);
+                $contentType = $response->getHeaderLine('content-type');
+                $filename = $media[$index]['name'] . $this->resolveExtension($contentType);
+                if (!file_exists($filename) || !empty($options['override'])) {
+                    file_put_contents($filename, (string) $response->getBody());
+                }
+                if (!empty($options['fulfilled'])) {
+                    $options['fulfilled']($response, $index);
+                }
+            },
+        ]));
     }
 
     /**
