@@ -1,7 +1,7 @@
 <?php
 
 use Monolog\{ErrorHandler, Formatter\LineFormatter, Handler\StreamHandler, Logger, Registry};
-use Pimple\Container;
+use Pimple\{Container, Psr11\Container as Psr11Container};
 use Symfony\Component\Yaml\Yaml;
 use Xandros15\Tumbler\Logger as StaticLogger;
 use Xandros15\Tumbler\Sites\{EH, H2R, HF, Nijie, Pixiv, SC, SiteInterface, Tumblr};
@@ -82,4 +82,4 @@ $container['nijie'] = function (Container $container): SiteInterface {
 Registry::addLogger($container->offsetGet('logger'));
 ErrorHandler::register($container->offsetGet('logger'));
 
-return $container;
+return new Psr11Container($container);

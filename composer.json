@@ -16,6 +16,7 @@
     "ext-json": "*",
     "symfony/yaml": "^5.0",
     "ext-dom": "*",
-    "php": ">= 7.2"
+    "php": ">= 7.2",
+    "symfony/console": "^5.0"
   }
 }
