@@ -4,10 +4,12 @@ namespace Xandros15\Tumbler\Sites;
 
 
 use Exception;
+use Symfony\Component\Yaml\Yaml;
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\Filesystem;
 use Xandros15\Tumbler\Logger;
 use Xandros15\Tumbler\Sites\Pixiv\PixivClient;
+use Xandros15\Tumbler\Sites\Pixiv\Work;
 
 final class Pixiv implements SiteInterface
 {
@@ -53,51 +55,61 @@ final class Pixiv implements SiteInterface
         Logger::info('Login...');
         $this->api->loginByCredentials($this->username, $this->password);
         Logger::info('Fetching works...');
+        $works = [];
+        $worksCount = 0;
+        $imagesCount = 0;
         while (1) {
             $response = $this->api->works($user_id, $page);
-            Logger::info("Page {$page}.");
+            Logger::info("Page: {$page}");
 
             foreach ($response['response'] as $work) {
-                Logger::info("Work {$work['id']}.");
-                $this->saveWorkImages($directory, $work);
+                $work = new Work($work);
+                $works[] = $work;
+                $worksCount++;
+                $imagesCount += $work->getPageCount();
             }
             if ($response['pagination']['pages'] < ++$page) {
-                //ends
                 break;
             }
+        }
+        Logger::info('Total works: ' . $worksCount);
+        Logger::info('Total images: ' . $imagesCount);
+        Logger::info('Saving images...');
+        foreach ($works as $i => $work) {
+            Logger::info('Work ' . ($i + 1) . '/' . $worksCount);
+            $this->saveWorkImages($directory, $work);
+        }
+        Logger::info('Making info file...');
+        $this->saveInfoFile($directory, $works);
+        Logger::info('Done \o/.');
+    }
+
+    /**
+     * @param string $directory
+     * @param Work $work
+     */
+    private function saveWorkImages(string $directory, Work $work): void
+    {
+        $images = $work->getImages();
+        foreach ($images as $i => $image) {
+            $name = $work->getId() . '_p' . $i;
+            $name = Filesystem::cleanupName($name);
+            $this->client->saveMedia($image, $directory . $name, ['headers' => self::HEADERS]);
+            Logger::info('Image ' . ($i + 1) . '/' . $work->getPageCount());
         }
     }
 
     /**
      * @param string $directory
-     * @param array $work
+     * @param Work[] $works
      */
-    private function saveWorkImages(string $directory, array $work): void
+    private function saveInfoFile(string $directory, array $works)
     {
-        if ($work['page_count'] > 1) {
-            for ($index = 0; $index < $work['page_count']; $index++) {
-                $name = $work['id'] . '_' . ($index + 1) . '_' . $work['title'];
-                $name = Filesystem::cleanupName($name);
-                $url = $this->changeImagePage($work['image_urls']['large'], $index);
-                $this->client->saveMedia($url, $directory . $name, ['headers' => self::HEADERS]);
-                Logger::info('Image ' . ($index + 1) . '/' . $work['page_count']);
-            }
-        } else {
-            $name = $work['id'] . '_' . $work['title'];
-            $name = Filesystem::cleanupName($name);
-            $this->client->saveMedia($work['image_urls']['large'], $directory . $name, ['headers' => self::HEADERS]);
-            Logger::info('Image 1/1');
+        $data = [];
+        foreach ($works as $work) {
+            $data[$work->getId()] = $work->getName();
         }
-    }
-
-    /**
-     * @param string $url
-     * @param string $page
-     *
-     * @return string
-     */
-    private function changeImagePage(string $url, string $page): string
-    {
-        return preg_replace('/_p\d{1,2}./', '_p' . $page . '.', $url);
+        $dump = Yaml::dump($data, 4, 4);
+        file_put_contents($directory . 'info-' . date('Ymd') . '.yaml', $dump);
     }
 }
