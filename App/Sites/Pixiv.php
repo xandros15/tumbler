@@ -5,22 +5,18 @@ namespace Xandros15\Tumbler\Sites;
 
 use Exception;
 use Monolog\Registry;
-use RuntimeException;
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\Filesystem;
 use Xandros15\Tumbler\Sites\Pixiv\PixivClient;
 
 final class Pixiv implements SiteInterface
 {
-    private const AUTH_ERROR = 'The access token provided is invalid.';
     private const START_PAGE = 1;
     private const HEADERS = [
         'Referer' => 'http://www.pixiv.net/',
     ];
     /** @var PixivClient */
     private $api;
-    /** @var  string */
-    private $refreshToken;
     /** @var string */
     private $username;
     /** @var string */
@@ -54,13 +50,11 @@ final class Pixiv implements SiteInterface
     {
         $directory = Filesystem::createDirectory($directory);
         $page = self::START_PAGE;
-        $this->authorization();
+        $this->log('Login...');
+        $this->api->loginByCredentials($this->username, $this->password);
+        $this->log('Fetching works...');
         while (1) {
             $response = $this->api->works($user_id, $page);
-            if ($this->isRequireAuthorization($response)) {
-                $this->authorization();
-                continue;
-            }
             $this->log("Page {$page}.");
 
             foreach ($response['response'] as $work) {
@@ -71,33 +65,6 @@ final class Pixiv implements SiteInterface
                 //ends
                 break;
             }
-        }
-    }
-
-    /**
-     * @param array $response
-     *
-     * @return bool
-     */
-    private function isRequireAuthorization(array $response): bool
-    {
-        return $response['status'] !== 'success' && self::AUTH_ERROR == $response['errors']['system']['message'];
-    }
-
-    /**
-     * @throws RuntimeException|Exception
-     */
-    private function authorization(): void
-    {
-        if ($this->refreshToken) {
-            $this->api->loginByRefreshToken($this->refreshToken);
-            $this->log('Login by refresh token.');
-        } elseif ($this->username && $this->password) {
-            $this->log('Login by password.');
-            $this->api->loginByCredentials($this->username, $this->password);
-            $this->refreshToken = $this->api->getRefreshToken();
-        } else {
-            throw new RuntimeException('Missing authorization.');
         }
     }
 

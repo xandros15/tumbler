@@ -5,28 +5,25 @@ namespace Xandros15\Tumbler\Sites\Pixiv;
 
 
 use GuzzleHttp\RequestOptions;
+use Symfony\Component\Yaml\Yaml;
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\UnauthorizedException;
 
 class PixivClient
 {
-    private const OAUTH_URL = 'https://oauth.secure.pixiv.net/auth/token';
+    const LAST_OATH_RESPONSE_FILE = __DIR__ . '/../../../tmp/pixiv.yaml';
     private const PIXIV_HASH = '28c1fdd170a5204386cb1313c7077b34f83e4aaf4aa829ce78c231e05b0bae2c';
     private const CLIENT_ID = 'bYGKuGVw91e0NMfPGp44euvGt59s';
     private const CLIENT_SECRET = 'HP3RmkgAmEGro0gn1x9ioawQE8WMfvLXDz3ZqxpK';//huh
+    private const OAUTH_URL = 'https://oauth.secure.pixiv.net/auth/token';
     private const BASE_URL = 'https://public-api.secure.pixiv.net';
-    private const DEFAULT_HEADERS = [
-        'Host' => 'oauth.secure.pixiv.net',
-        'User-Agent' => 'PixivAndroidApp/5.0.156 (Android 9; ONEPLUS A6013)',
-    ];
 
     /** @var array */
-    protected $headers = [
-        'Authorization' => 'Bearer WHDWCGnwWA2C8PRfQSdXJxjXp0G6ULRaRkkd6t5B6h8',
-    ];
+    protected $headers = [];
 
     protected $accessToken;
     protected $refreshToken;
+    private $accessTokenExpiresAt;
 
     /** @var Client */
     private $client;
@@ -35,6 +32,7 @@ class PixivClient
     public function __construct(Client $client)
     {
         $this->client = $client;
+        $this->loadLastOath();
     }
 
     /**
@@ -45,6 +43,19 @@ class PixivClient
      */
     public function loginByCredentials(string $user, string $password): void
     {
+        if (time() < $this->accessTokenExpiresAt) {
+            return;
+        }
+
+        if ($this->refreshToken) {
+            try {
+                $this->loginByRefreshToken($this->refreshToken);
+
+                return;
+            } catch (UnauthorizedException $exception) {
+            }
+        }
+
         $this->login([
             'username' => $user,
             'password' => $password,
@@ -59,9 +70,13 @@ class PixivClient
      */
     public function loginByRefreshToken(string $refreshToken = ''): void
     {
+        $refreshToken = $refreshToken ?: $this->refreshToken;
+        if ($refreshToken === '') {
+            throw new UnauthorizedException('Missing refresh token.');
+        }
         $this->login([
             'grant_type' => 'refresh_token',
-            'refresh_token' => $refreshToken ?: $this->refreshToken,
+            'refresh_token' => $refreshToken,
         ]);
     }
 
@@ -81,10 +96,11 @@ class PixivClient
         ], $params);
 
         $date = date(DATE_RFC3339);
-        $headers = array_merge(self::DEFAULT_HEADERS, [
+        $headers = array_merge([
+            'User-Agent' => 'PixivAndroidApp/5.0.156 (Android 9; ONEPLUS A6013)',
+            'content-type' => 'application/x-www-form-urlencoded',
             'x-client-time' => $date,
             'x-client-hash' => md5($date . self::PIXIV_HASH),
-            'content-type' => 'application/x-www-form-urlencoded',
         ]);
 
         $response = $this->client->fetch(self::OAUTH_URL, [
@@ -93,20 +109,44 @@ class PixivClient
             RequestOptions::HTTP_ERRORS => false,
             'method' => 'post',
         ]);
-        $result = json_decode((string) $response->getBody());
+        $result = json_decode((string) $response->getBody(), true);
 
-        if (isset($result->has_error)) {
-            throw new UnauthorizedException('Login error: ' . $result->errors->system->message);
+        if (isset($result['has_error'])) {
+            throw new UnauthorizedException('Login error: ' . $result['errors']['system']['message']);
         }
-        $this->setAccessToken($result->response->access_token);
-        $this->setRefreshToken($result->response->refresh_token);
+        $result['response']['expires_at'] = time() + $result['response']['expires_in'];
+        $this->setAccessToken($result['response']['access_token'], $result['response']['expires_at']);
+        $this->setRefreshToken($result['response']['refresh_token']);
+        $this->saveLastOath($result);
+    }
+
+    private function loadLastOath(): void
+    {
+        if (file_exists(self::LAST_OATH_RESPONSE_FILE)) {
+            $result = Yaml::parseFile(self::LAST_OATH_RESPONSE_FILE);
+            if (time() < $result['response']['expires_at']) {
+                $this->setAccessToken($result['response']['access_token'], $result['response']['expires_at']);
+            }
+            $this->setRefreshToken($result['response']['refresh_token']);
+        }
+    }
+
+    /**
+     * @param $result
+     */
+    private function saveLastOath(array $result): void
+    {
+        $dump = Yaml::dump($result, 4, 4);
+        file_put_contents(self::LAST_OATH_RESPONSE_FILE, $dump);
     }
 
     /**
      * @param string $accessToken
+     * @param string $accessTokenExpiriesAt
      */
-    public function setAccessToken(string $accessToken)
+    public function setAccessToken(string $accessToken, string $accessTokenExpiriesAt)
     {
+        $this->accessTokenExpiresAt = $accessTokenExpiriesAt;
         $this->accessToken = $accessToken;
         $this->headers['Authorization'] = 'Bearer ' . $accessToken;
     }
@@ -127,8 +167,19 @@ class PixivClient
         $this->refreshToken = $refreshToken;
     }
 
+    /**
+     * @param int $id
+     * @param int $page
+     *
+     * @return array
+     * @throws UnauthorizedException
+     */
     public function works(int $id, int $page): array
     {
+        if (time() > $this->accessTokenExpiresAt) {
+            $this->loginByRefreshToken();
+        }
+
         $params = [
             'page' => $page,
             'per_page' => 30,
@@ -138,8 +189,7 @@ class PixivClient
         ];
         $url = self::BASE_URL . '/v1/users/' . $id . '/works.json?' . http_build_query($params);
         $response = $this->client->fetch($url, [
-            RequestOptions::HEADERS => array_merge(self::DEFAULT_HEADERS, $this->headers, [
-                'Host' => 'public-api.secure.pixiv.net',
+            RequestOptions::HEADERS => array_merge($this->headers, [
                 'User-Agent' => 'PixivIOSApp/5.8.3',
             ]),
             RequestOptions::HTTP_ERRORS => false,
