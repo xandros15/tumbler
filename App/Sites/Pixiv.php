@@ -74,21 +74,21 @@ final class Pixiv implements SiteInterface
         }
         Logger::info('Total works: ' . $worksCount);
         Logger::info('Total images: ' . $imagesCount);
-        Logger::info('Saving images...');
+        Logger::info('Download images...');
         foreach ($works as $i => $work) {
             Logger::info('Work ' . ($i + 1) . '/' . $worksCount);
-            $this->saveWorkImages($directory, $work);
+            $this->downloadImages($work, $directory);
         }
         Logger::info('Making info file...');
-        $this->saveInfoFile($directory, $works);
+        $this->saveInfoFile($works, $directory);
         Logger::info('Done \o/.');
     }
 
     /**
-     * @param string $directory
      * @param Work $work
+     * @param string $directory
      */
-    private function saveWorkImages(string $directory, Work $work): void
+    private function downloadImages(Work $work, string $directory): void
     {
         $images = $work->getImages();
         foreach ($images as $i => $image) {
@@ -100,10 +100,10 @@ final class Pixiv implements SiteInterface
     }
 
     /**
-     * @param string $directory
      * @param Work[] $works
+     * @param string $directory
      */
-    private function saveInfoFile(string $directory, array $works)
+    private function saveInfoFile(array $works, string $directory)
     {
         $data = [];
         foreach ($works as $work) {
