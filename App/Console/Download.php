@@ -66,9 +66,9 @@ class Download extends Command
         $isCwd = strpos($directory, './') === 0;
         $isUwd = strpos($directory, '../') === 0;
         if (!$directory) {
-            $directory = getcwd() . DIRECTORY_SEPARATOR . $site;
+            $directory = getcwd() . DIRECTORY_SEPARATOR;
         } elseif ($isCwd || $isUwd) {
-            $directory = getcwd() . DIRECTORY_SEPARATOR . $directory;
+            $directory = getcwd() . DIRECTORY_SEPARATOR . $directory . DIRECTORY_SEPARATOR;
         }
 
         $app->download($ident, $directory);
