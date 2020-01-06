@@ -43,7 +43,8 @@ final class HF implements SiteInterface
     public function download(string $ident, string $directory): void
     {
         $url = self::BASE_URL . self::PICTURES_ENDPOINT . $ident;
-        $directory = Filesystem::createDirectory($directory);
+        $name = Filesystem::cleanupName($ident);
+        $directory = Filesystem::createDirectory($directory . '/' . $name);
         $page = $this->client->fetchHTML($url);
         $page = $this->passRestrictionPage($page);
         if ($this->canSignup()) {

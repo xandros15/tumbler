@@ -33,7 +33,8 @@ final class Tumblr implements SiteInterface
      */
     public function download(string $blogName, string $directory): void
     {
-        $directory = Filesystem::createDirectory($directory);
+        $name = Filesystem::cleanupName($blogName);
+        $directory = Filesystem::createDirectory($directory . '/' . $name);
         $uri = $this->getBaseUri($blogName);
         $this->downloadPhoto($uri, $directory);
         $this->downloadVideo($uri, $directory);

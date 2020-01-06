@@ -34,7 +34,8 @@ final class SC implements SiteInterface
     public function download(string $ident, string $directory): void
     {
         $url = self::BASE_URL . '?' . http_build_query(['tags' => $ident, 'page' => self::START_PAGE]);
-        $directory = Filesystem::createDirectory($directory);
+        $name = Filesystem::cleanupName($ident);
+        $directory = Filesystem::createDirectory($directory . '/' . $name);
         $name = '';
         $index = 1;
         while ($url) {

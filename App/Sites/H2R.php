@@ -28,7 +28,8 @@ final class H2R implements SiteInterface
      */
     public function download(string $ident, string $directory): void
     {
-        $directory = Filesystem::createDirectory($directory);
+        $name = Filesystem::cleanupName($ident);
+        $directory = Filesystem::createDirectory($directory . '/' . $name);
         $mainPage = $this->client->fetchHTML(self::BASE_URI . $ident . '/1/');
         foreach ($mainPage->filter('script') as $node) {
             /** @var $node DOMElement */
