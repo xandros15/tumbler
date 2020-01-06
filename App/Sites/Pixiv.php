@@ -5,20 +5,19 @@ namespace Xandros15\Tumbler\Sites;
 
 use Exception;
 use Monolog\Registry;
-use PixivAPI;
-use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\Filesystem;
+use Xandros15\Tumbler\Sites\Pixiv\PixivClient;
 
 final class Pixiv implements SiteInterface
 {
     private const AUTH_ERROR = 'The access token provided is invalid.';
     private const START_PAGE = 1;
-    protected $headers = [
+    private const HEADERS = [
         'Referer' => 'http://www.pixiv.net/',
     ];
-    /** @var PixivAPI */
+    /** @var PixivClient */
     private $api;
     /** @var  string */
     private $refreshToken;
@@ -39,10 +38,10 @@ final class Pixiv implements SiteInterface
      */
     public function __construct(string $username, string $password)
     {
-        $this->api = new PixivAPI();
         $this->username = $username;
         $this->password = $password;
         $this->client = new Client();
+        $this->api = new PixivClient($this->client);
     }
 
     /**
@@ -55,21 +54,18 @@ final class Pixiv implements SiteInterface
     {
         $directory = Filesystem::createDirectory($directory);
         $page = self::START_PAGE;
+        $this->authorization();
         while (1) {
-            $response = $this->api->users_works($user_id, $page);
-            $this->getLogger()->info("Connect: id {$user_id} page {$page}");
+            $response = $this->api->works($user_id, $page);
             if ($this->isRequireAuthorization($response)) {
                 $this->authorization();
                 continue;
             }
+            $this->log("Page {$page}.");
 
             foreach ($response['response'] as $work) {
-                $name = $directory . strtotime($work['created_time']);
-                if ($work['page_count'] > 1) {
-                    $this->createGallery($name, $work['image_urls']['large'], $work['page_count']);
-                } else {
-                    $this->client->saveMedia($work['image_urls']['large'], $name);
-                }
+                $this->log("Work {$work['id']}.");
+                $this->saveWorkImages($directory, $work);
             }
             if ($response['pagination']['pages'] < ++$page) {
                 //ends
@@ -89,6 +85,53 @@ final class Pixiv implements SiteInterface
     }
 
     /**
+     * @throws RuntimeException|Exception
+     */
+    private function authorization(): void
+    {
+        if ($this->refreshToken) {
+            $this->api->loginByRefreshToken($this->refreshToken);
+            $this->log('Login by refresh token.');
+        } elseif ($this->username && $this->password) {
+            $this->log('Login by password.');
+            $this->api->loginByCredentials($this->username, $this->password);
+            $this->refreshToken = $this->api->getRefreshToken();
+        } else {
+            throw new RuntimeException('Missing authorization.');
+        }
+    }
+
+    /**
+     * @param string $message
+     */
+    private function log(string $message): void
+    {
+        Registry::getInstance('info')->info($message);
+    }
+
+    /**
+     * @param string $directory
+     * @param array $work
+     */
+    private function saveWorkImages(string $directory, array $work): void
+    {
+        if ($work['page_count'] > 1) {
+            for ($index = 0; $index < $work['page_count']; $index++) {
+                $name = $work['id'] . '_' . ($index + 1) . '_' . $work['title'];
+                $name = Filesystem::cleanupName($name);
+                $url = $this->changeImagePage($work['image_urls']['large'], $index);
+                $this->client->saveMedia($url, $directory . $name, ['headers' => self::HEADERS]);
+                $this->log('Image ' . ($index + 1) . '/' . $work['page_count']);
+            }
+        } else {
+            $name = $work['id'] . '_' . $work['title'];
+            $name = Filesystem::cleanupName($name);
+            $this->client->saveMedia($work['image_urls']['large'], $directory . $name, ['headers' => self::HEADERS]);
+            $this->log('Image 1/1');
+        }
+    }
+
+    /**
      * @param string $url
      * @param string $page
      *
@@ -97,43 +140,5 @@ final class Pixiv implements SiteInterface
     private function changeImagePage(string $url, string $page): string
     {
         return preg_replace('/_p\d{1,2}./', '_p' . $page . '.', $url);
-    }
-
-    /**
-     * @throws RuntimeException|Exception
-     */
-    private function authorization(): void
-    {
-        if ($this->refreshToken) {
-            $this->api->login(null, null, $this->refreshToken);
-            $this->getLogger()->info('Login by refresh token');
-        } elseif ($this->username && $this->password) {
-            $this->getLogger()->info('Login by password');
-            $this->api->login($this->username, $this->password);
-            $this->refreshToken = $this->api->getRefreshToken();
-        } else {
-            throw new RuntimeException('Missing authorization');
-        }
-    }
-
-    /**
-     * @param string $name
-     * @param string $url
-     * @param int $count
-     */
-    private function createGallery(string $name, string $url, int $count): void
-    {
-        for ($index = 0; $index < $count; $index++) {
-            $url = $this->changeImagePage($url, $index);
-            $this->client->saveMedia($url, $name . '_' . ($index + 1));
-        }
-    }
-
-    /**
-     * @return LoggerInterface
-     */
-    private function getLogger(): LoggerInterface
-    {
-        return Registry::getInstance('global');
     }
 }
