@@ -18,8 +18,12 @@ $container['logger'] = function (): Monolog\Logger {
     $errorHandler = new StreamHandler('error.log', Logger::ERROR);
     $errorHandler->setFormatter($formatter);
 
+    $stdoutHandler = new StreamHandler('php://output', Logger::ERROR);
+    $stdoutHandler->setFormatter($formatter);
+
     $logger->pushHandler($errorHandler);
     $logger->pushHandler($debugHandler);
+    $logger->pushHandler($stdoutHandler);
 
     return $logger;
 };
