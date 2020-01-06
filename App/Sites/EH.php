@@ -3,13 +3,15 @@
 namespace Xandros15\Tumbler\Sites;
 
 
-use InvalidArgumentException;
 use Symfony\Component\DomCrawler\Crawler;
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\Filesystem;
+use Xandros15\Tumbler\Logger;
+use Xandros15\Tumbler\Sites\EH\Image;
 
 final class EH implements SiteInterface
 {
+    private const BASE_URL = 'https://exhentai.org/g/';
     /** @var Client */
     private $client;
 
@@ -25,58 +27,26 @@ final class EH implements SiteInterface
     }
 
     /**
-     * @param string $galleryUrl
+     * @param string $gid
      * @param string $directory
      */
-    function download(string $galleryUrl, string $directory): void
+    public function download(string $gid, string $directory): void
     {
-        $directory = Filesystem::createDirectory($directory);
-
-        $gallery = $this->client->fetchHTML($galleryUrl);
-        $url = $this->getGalleryFirstPage($gallery) ?: $galleryUrl;
-        while ($url) {
-            $page = $this->client->fetchHTML($url);
-            $this->client->saveMedia($this->getImageUrl($page), $directory . $this->getName($page));
-            $url = $this->getNextPage($page, $url);
+        Logger::info('Fetching gallery...');
+        $gallery = $this->client->fetchHTML(self::BASE_URL . $gid);
+        Logger::info('Fetching images...');
+        $images = $this->getImages($gallery);
+        $imagesCount = count($images);
+        Logger::info('Total images: ' . $imagesCount);
+        Logger::info('Downloading images...');
+        $folderName = Filesystem::cleanupName($gallery->filter('#gn')->text());
+        $directory = Filesystem::createDirectory($directory . '/' . $folderName);
+        foreach ($images as $i => $image) {
+            $name = Filesystem::cleanupName($image->getName());
+            $this->client->saveMedia($image->getSource(), $directory . $name);
+            Logger::info('Image ' . ($i + 1) . '/' . $imagesCount);
         }
-    }
-
-    /**
-     * @param Crawler $gallery
-     *
-     * @return string
-     */
-    private function getGalleryFirstPage(Crawler $gallery): string
-    {
-        try {
-            return $gallery->filter('#gdt a')->first()->link()->getUri();
-        } catch (InvalidArgumentException $e) {
-            return '';
-        }
-    }
-
-    /**
-     * @param Crawler $page
-     *
-     * @return string
-     */
-    private function getImageUrl(Crawler $page): string
-    {
-        if ($page->filter('#i7 a')->count()) {
-            return $page->filter('#i7 a')->attr('href');//(0)->getAttribute('href');
-        }
-
-        return $page->filter('#img')->attr('src');
-    }
-
-    /**
-     * @param Crawler $page
-     *
-     * @return string
-     */
-    private function getName(Crawler $page): string
-    {
-        return pathinfo(explode(' ', $page->filter('#i2 > div')->getNode(1)->nodeValue, 2)[0], PATHINFO_FILENAME);
+        Logger::info('Done \o/.');
     }
 
     /**
@@ -85,10 +55,31 @@ final class EH implements SiteInterface
      *
      * @return string
      */
-    private function getNextPage(Crawler $page, string $currentUrl): string
+    private function getNextPageUrl(Crawler $page, string $currentUrl): string
     {
         $next = $page->filter('#next')->attr('href');
 
         return $next != $currentUrl ? $next : '';
+    }
+
+    /**
+     * @param Crawler $gallery
+     *
+     * @return Image[]
+     */
+    private function getImages(Crawler $gallery): array
+    {
+        $images = [];
+        $a = $gallery->filter('#gdt a');
+        $next = $a->count() > 0 ? $a->attr('href') : '';
+        $pageCount = 0;
+        while ($next) {
+            $page = $this->client->fetchHTML($next);
+            $images[] = new Image($page);
+            $next = $this->getNextPageUrl($page, $next);
+            Logger::info('Page: ' . ++$pageCount);
+        }
+
+        return $images;
     }
 }
