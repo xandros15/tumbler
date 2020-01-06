@@ -6,7 +6,7 @@ namespace Xandros15\Tumbler\Sites\Nijie;
 
 use Symfony\Component\DomCrawler\Crawler;
 
-class Post
+class Work
 {
     const POPUP_BASE_URL = 'https://nijie.info/view_popup.php';
     const VIEW_BASE_URL = 'https://nijie.info/view.php';
@@ -16,6 +16,7 @@ class Post
     private $popupUrl;
     private $viewUrl;
     private $images = [];
+    private $pageCount = 0;
 
     /**
      * Post constructor.
@@ -37,6 +38,7 @@ class Post
     public function attachImages(array $images): void
     {
         $this->images = $images;
+        $this->pageCount = count($images);
     }
 
     /**
@@ -85,5 +87,13 @@ class Post
     public function getImages(): array
     {
         return $this->images;
+    }
+
+    /**
+     * @return int
+     */
+    public function getPageCount(): int
+    {
+        return $this->pageCount;
     }
 }
