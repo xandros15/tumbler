@@ -4,8 +4,6 @@
 namespace Xandros15\Tumbler\Sites\Nijie;
 
 
-use Symfony\Component\DomCrawler\Crawler;
-
 class Work
 {
     const POPUP_BASE_URL = 'https://nijie.info/view_popup.php';
@@ -15,30 +13,21 @@ class Work
     private $name;
     private $popupUrl;
     private $viewUrl;
-    private $images = [];
-    private $pageCount = 0;
 
     /**
      * Post constructor.
      *
-     * @param Crawler $crawler
+     * @param int $id
+     * @param int $userId
+     * @param string $name
      */
-    public function __construct(Crawler $crawler)
+    public function __construct(int $id, int $userId, string $name)
     {
-        $this->id = (int) $crawler->attr('illust_id');
-        $this->userId = (int) $crawler->attr('user_id');
-        $this->name = $crawler->attr('alt');
+        $this->id = $id;
+        $this->userId = $userId;
+        $this->name = $name;
         $this->popupUrl = self::POPUP_BASE_URL . '?' . http_build_query(['id' => $this->id]);
         $this->viewUrl = self::VIEW_BASE_URL . '?' . http_build_query(['id' => $this->id]);
-    }
-
-    /**
-     * @param array $images
-     */
-    public function attachImages(array $images): void
-    {
-        $this->images = $images;
-        $this->pageCount = count($images);
     }
 
     /**
@@ -79,21 +68,5 @@ class Work
     public function getName(): ?string
     {
         return $this->name;
-    }
-
-    /**
-     * @return array
-     */
-    public function getImages(): array
-    {
-        return $this->images;
-    }
-
-    /**
-     * @return int
-     */
-    public function getPageCount(): int
-    {
-        return $this->pageCount;
     }
 }
