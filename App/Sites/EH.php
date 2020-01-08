@@ -3,11 +3,10 @@
 namespace Xandros15\Tumbler\Sites;
 
 
-use Symfony\Component\DomCrawler\Crawler;
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\Filesystem;
 use Xandros15\Tumbler\Logger;
-use Xandros15\Tumbler\Sites\EH\Image;
+use Xandros15\Tumbler\Sites\EH\API;
 
 final class EH implements SiteInterface
 {
@@ -32,64 +31,29 @@ final class EH implements SiteInterface
      */
     public function download(string $gid, string $directory): void
     {
+        $api = new API($this->client);
         Logger::info('Fetching gallery...');
-        $gallery = $this->client->fetchHTML(self::BASE_URL . $gid);
+        $gallery = $api->getGallery(self::BASE_URL . $gid);
+        Logger::info('Total images: ' . $gallery->getImagesCount());
         Logger::info('Fetching images...');
-        $images = $this->getImages($gallery);
-        $imagesCount = count($images);
-        Logger::info('Total images: ' . $imagesCount);
-        Logger::info('Downloading images...');
-        $folderName = Filesystem::cleanupName($gallery->filter('#gn')->text());
+        $firstUrl = $gallery->getFirstViewUrl();
+        $images = [];
+        $folderName = Filesystem::cleanupName($gallery->getName());
         $directory = Filesystem::createDirectory($directory . '/' . $folderName);
-        $media = [];
-        foreach ($images as $i => $image) {
+        foreach ($api->getImages($firstUrl) as $i => $image) {
+            Logger::info('Image: ' . ($i + 1) . '/' . $gallery->getImagesCount());
             $name = Filesystem::cleanupName($image->getName());
-            $media[] = [
-                'url' => $image->getSource(),
-                'name' => $directory . $name,
-            ];
+            $images[] = ['url' => $image->getSource(), 'name' => $directory . $name];
         }
+
+        Logger::info('Downloading images...');
         $done = 0;
-        $this->client->saveBatchMedia($media, [
-            'fulfilled' => function () use ($imagesCount, &$done) {
-                Logger::info('Image ' . ++$done . '/' . $imagesCount);
+        $this->client->saveBatchMedia($images, [
+            'fulfilled' => function () use ($gallery, &$done) {
+                Logger::info('Image ' . ++$done . '/' . $gallery->getImagesCount());
             },
         ]);
 
         Logger::info('Done \o/.');
-    }
-
-    /**
-     * @param Crawler $page
-     * @param string $currentUrl
-     *
-     * @return string
-     */
-    private function getNextPageUrl(Crawler $page, string $currentUrl): string
-    {
-        $next = $page->filter('#next')->attr('href');
-
-        return $next != $currentUrl ? $next : '';
-    }
-
-    /**
-     * @param Crawler $gallery
-     *
-     * @return Image[]
-     */
-    private function getImages(Crawler $gallery): array
-    {
-        $images = [];
-        $a = $gallery->filter('#gdt a');
-        $next = $a->count() > 0 ? $a->attr('href') : '';
-        $pageCount = 0;
-        while ($next) {
-            $page = $this->client->fetchHTML($next);
-            $images[] = new Image($page);
-            $next = $this->getNextPageUrl($page, $next);
-            Logger::info('Page: ' . ++$pageCount);
-        }
-
-        return $images;
     }
 }
