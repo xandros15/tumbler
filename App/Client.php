@@ -5,12 +5,11 @@ namespace Xandros15\Tumbler;
 
 
 use Exception;
-use GuzzleHttp\Pool;
-use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\Form;
+use function GuzzleHttp\Promise\settle;
 
 class Client
 {
@@ -97,11 +96,7 @@ class Client
     public function saveMedia(string $url, string $name, array $options = []): void
     {
         $image = $this->fetch($url, $options);
-        $contentType = $image->getHeaderLine('content-type');
-        $filename = $name . $this->resolveExtension($contentType);
-        if (!file_exists($filename) || !empty($options['override'])) {
-            file_put_contents($filename, (string) $image->getBody());
-        }
+        $this->saveResponse($image, $name, !empty($options['override']));
     }
 
     /**
@@ -110,26 +105,38 @@ class Client
      */
     public function saveBatchMedia(array $media, array $options = []): void
     {
-        $requests = [];
+        $promises = [];
         $options['headers'] = $this->prepareHeaders($options['headers'] ?? []);
         foreach ($media as $item) {
-            $requests[] = new Request('GET', $item['url'], $options['headers']);
+            $promise = $this->client->getClient()->getAsync($item['url'], $options)->then(function (
+                ResponseInterface $response
+            ) use ($item, $options) {
+                $this->saveResponse($response, $item['name'], !empty($options['override']));
+                Logger::debug('Batch connect: ' . $item['url'], $options);
+            }, function () use ($item, $options) {
+                Logger::error('Batch connect failed: ' . $item['url'], $options);
+            });
+            if (!empty($options['fulfilled']) && is_callable($options['fulfilled'])) {
+                $promise->then($options['fulfilled']);
+            }
+            $promises[] = $promise;
         }
 
-        Pool::batch($this->client->getClient(), $requests, array_merge($options, [
-            'concurrency' => 5,
-            'fulfilled' => function (ResponseInterface $response, int $index) use ($media, $options) {
-                Logger::debug('Batch connect: ' . $media[$index]['url'], $options);
-                $contentType = $response->getHeaderLine('content-type');
-                $filename = $media[$index]['name'] . $this->resolveExtension($contentType);
-                if (!file_exists($filename) || !empty($options['override'])) {
-                    file_put_contents($filename, (string) $response->getBody());
-                }
-                if (!empty($options['fulfilled'])) {
-                    $options['fulfilled']($response, $index);
-                }
-            },
-        ]));
+        settle($promises)->wait();
+    }
+
+    /**
+     * @param ResponseInterface $response
+     * @param string $filename
+     * @param bool $override
+     */
+    private function saveResponse(ResponseInterface $response, string $filename, bool $override = false): void
+    {
+        $contentType = $response->getHeaderLine('content-type');
+        $filename = $filename . $this->resolveExtension($contentType);
+        if (!file_exists($filename) || !empty($override)) {
+            file_put_contents($filename, (string) $response->getBody());
+        }
     }
 
     /**
