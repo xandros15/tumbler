@@ -68,10 +68,12 @@ final class Nijie implements SiteInterface
         Logger::info('Total works: ' . $worksCount);
         Logger::info('Total images: ' . $imagesCount);
         Logger::info('Download images...');
-        foreach ($images as $i => $image) {
-            $this->client->saveMedia($image['url'], $image['name']);
-            Logger::info('Image ' . ($i + 1) . '/' . $imagesCount);
-        }
+        $done = 0;
+        $this->client->saveBatchMedia($images, [
+            'fulfilled' => function () use ($imagesCount, &$done) {
+                Logger::info('Image ' . ++$done . '/' . $imagesCount);
+            },
+        ]);
         $this->saveInfoFile($works, $directory);
         Logger::info('Done \o/.');
     }
