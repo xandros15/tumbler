@@ -36,6 +36,7 @@ class Filesystem
     {
         $name = trim($name);
         $name = str_replace(['\\', '/', ':', '"', '*', '?', '<', '>', '|'], '', $name);
+        $name = preg_replace('/\s\s+/', ' ', $name);
 
         //$name = str_replace(' ', '_', $name);
 
