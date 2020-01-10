@@ -18,5 +18,10 @@
     "ext-dom": "*",
     "php": ">= 7.2",
     "symfony/console": "^5.0"
+  },
+  "scripts": {
+    "post-install-cmd": [
+      "Xandros15\\Tumbler\\Install::afterInstall"
+    ]
   }
 }
