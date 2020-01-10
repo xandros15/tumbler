@@ -5,10 +5,13 @@ namespace Xandros15\Tumbler;
 
 
 use Exception;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
 use GuzzleHttp\RequestOptions;
 use Psr\Http\Message\ResponseInterface;
 use Symfony\Component\DomCrawler\Crawler;
 use Symfony\Component\DomCrawler\Form;
+use Xandros15\Tumbler\Client\Retry;
 use function GuzzleHttp\Promise\settle;
 
 class Client
@@ -38,8 +41,13 @@ class Client
 
     public function __construct()
     {
+        $handler = HandlerStack::create();
+        $handler->push(Middleware::retry(new Retry(), function () {
+            return 1000;
+        }));
+        $guzzle = new \GuzzleHttp\Client(array_merge(static::DEFAULT_CLIENT_OPTIONS, ['handler' => $handler]));
         $goutte = new \Goutte\Client();
-        $goutte->setClient(new \GuzzleHttp\Client(static::DEFAULT_CLIENT_OPTIONS));
+        $goutte->setClient($guzzle);
         $this->client = $goutte;
     }
 
