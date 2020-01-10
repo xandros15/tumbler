@@ -1,0 +1,21 @@
+tumblr:
+  api_key:
+pixiv:
+  username:
+  password:
+eh:
+  cookie:
+sc:
+  cookie:
+hf:
+  username:
+  password:
+nijie:
+  email:
+  password:
+mailer:
+  login:
+  password:
+  host:
+  port:
+  security:
