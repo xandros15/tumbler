@@ -13,6 +13,7 @@ class API
 {
     private const LOGIN_PAGE = 'https://nijie.info/login.php';
     private const ILLUSTRATION_PAGE = 'https://nijie.info/members_illust.php';
+    private const AGE_JUMP_PAGE = 'https://nijie.info/age_jump.php?url=';
     private const IMAGE_XPATH = '//div[starts-with(@id,\'diff_\')]//img[starts-with(@src,\'//\') or starts-with(@src,\'http\')]';
     private const VIDEO_XPATH = '//div[starts-with(@id,\'diff_\')]//video[starts-with(@src,\'//\') or starts-with(@src,\'http\')]';
     /** @var Client */
@@ -44,7 +45,7 @@ class API
     public function signup(string $email, string $password): void
     {
         //prepare
-        $page = $this->client->fetchHTML(self::LOGIN_PAGE);
+        $page = $this->client->fetchHTML(self::AGE_JUMP_PAGE);//age_jump
         $form = $page->selectButton('ログイン')->form();
         $form['email'] = $email;
         $form['password'] = $password;
