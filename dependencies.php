@@ -19,6 +19,7 @@ $container['logger'] = function (): Monolog\Logger {
     $errorHandler = new StreamHandler(__DIR__ . '/tmp/error.log', Logger::ERROR);
     $errorHandler->setFormatter($formatter);
 
+    $formatter = new LineFormatter("[%datetime%] %message% %context% %extra%\n", 'H:i:s', true, true);
     $stdoutHandler = new StreamHandler('php://output', Logger::INFO);
     $stdoutHandler->setFormatter($formatter);
 
