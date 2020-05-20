@@ -21,6 +21,8 @@ final class Nijie implements SiteInterface
     private $api;
     /** @var Client */
     private $client;
+    /** @var $works */
+    private $works = [];
 
     /**
      * HF constructor.
@@ -49,6 +51,7 @@ final class Nijie implements SiteInterface
         $name = $this->api->getIllustratorName($ident);
         $name = Filesystem::cleanupName($name);
         $directory = Filesystem::createDirectory($directory . '/' . $name);
+        $this->loadInfoFile($directory);
         $worksCount = 0;
         $imagesCount = 0;
         Logger::info('Fetching works...');
@@ -56,6 +59,10 @@ final class Nijie implements SiteInterface
         Logger::info('Fetching images...');
         $images = [];
         foreach ($works as $work) {
+            if (isset($this->works[$work->getId()])) {
+                Logger::info('Skipped work id: ' . $work->getId());
+                continue;
+            }
             Logger::info('Work id: ' . $work->getId());
             foreach ($this->api->fetchImagesWork($work) as $i => $url) {
                 $name = $work->getId() . '_p' . $i;
@@ -74,22 +81,42 @@ final class Nijie implements SiteInterface
                 Logger::info('Image ' . ++$done . '/' . $imagesCount);
             },
         ]);
-        $this->saveInfoFile($works, $directory);
+        $this->saveInfoFile($ident, $works, $directory);
         Logger::info('Done \o/.');
     }
 
     /**
+     * @param string $directory
+     */
+    private function loadInfoFile(string $directory)
+    {
+        $files = glob($directory . 'info-*.yaml');
+        $last = '';
+        foreach ($files as $file) {
+            $last = $file;
+        }
+        if ($last) {
+            $yaml = Yaml::parseFile($last);
+            $this->works = $yaml['works'] ?? [];
+        }
+    }
+
+    /**
+     * @param string $ident
      * @param Work[] $works
      * @param string $directory
      */
-    private function saveInfoFile(array $works, string $directory)
+    private function saveInfoFile(string $ident, array $works, string $directory)
     {
         Logger::info('Making info file...');
         $data = [];
         foreach ($works as $work) {
             $data[$work->getId()] = $work->getName();
         }
-        $dump = Yaml::dump($data, 4, 4);
+        $dump = Yaml::dump([
+            'ident' => $ident,
+            'works' => $data,
+        ], 4, 4);
         file_put_contents($directory . 'info-' . date('Ymd') . '.yaml', $dump);
     }
 }

@@ -25,6 +25,8 @@ final class Pixiv implements SiteInterface
     private $password;
     /** @var Client */
     private $client;
+    /** @var $works */
+    private $works = [];
 
     /**
      * Pixiv constructor.
@@ -79,13 +81,34 @@ final class Pixiv implements SiteInterface
         Logger::info('Download images...');
         $name = Filesystem::cleanupName($userName);
         $directory = Filesystem::createDirectory($directory . $name);
+        $this->loadInfoFile($directory);
         foreach ($works as $i => $work) {
+            if (isset($this->works[$work->getId()])) {
+                Logger::info('Skipped work id: ' . $work->getId());
+                continue;
+            }
             Logger::info('Work ' . ($i + 1) . '/' . $worksCount);
             $this->downloadImages($work, $directory);
         }
         Logger::info('Making info file...');
-        $this->saveInfoFile($works, $directory);
+        $this->saveInfoFile($user_id, $works, $directory);
         Logger::info('Done \o/.');
+    }
+
+    /**
+     * @param string $directory
+     */
+    private function loadInfoFile(string $directory)
+    {
+        $files = glob($directory . 'info-*.yaml');
+        $last = '';
+        foreach ($files as $file) {
+            $last = $file;
+        }
+        if ($last) {
+            $yaml = Yaml::parseFile($last);
+            $this->works = $yaml['works'] ?? [];
+        }
     }
 
     /**
@@ -104,16 +127,20 @@ final class Pixiv implements SiteInterface
     }
 
     /**
+     * @param string $ident
      * @param Work[] $works
      * @param string $directory
      */
-    private function saveInfoFile(array $works, string $directory)
+    private function saveInfoFile(string $ident, array $works, string $directory)
     {
         $data = [];
         foreach ($works as $work) {
             $data[$work->getId()] = $work->getName();
         }
-        $dump = Yaml::dump($data, 4, 4);
+        $dump = Yaml::dump([
+            'ident' => $ident,
+            'works' => $data,
+        ], 4, 4);
         file_put_contents($directory . 'info-' . date('Ymd') . '.yaml', $dump);
     }
 }
