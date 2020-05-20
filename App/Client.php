@@ -116,9 +116,6 @@ class Client
         $promises = [];
         $options['headers'] = $this->prepareHeaders($options['headers'] ?? []);
         foreach ($media as $item) {
-            if (file_exists($item['name']) && !empty($options['override'])) {
-                continue;
-            }
             $promise = $this->client->getClient()->getAsync($item['url'], $options)->then(function (
                 ResponseInterface $response
             ) use ($item, $options) {
