@@ -13,8 +13,8 @@ class PixivClient
 {
     const LAST_OATH_RESPONSE_FILE = __DIR__ . '/../../../tmp/pixiv.yaml';
     private const PIXIV_HASH = '28c1fdd170a5204386cb1313c7077b34f83e4aaf4aa829ce78c231e05b0bae2c';
-    private const CLIENT_ID = 'bYGKuGVw91e0NMfPGp44euvGt59s';
-    private const CLIENT_SECRET = 'HP3RmkgAmEGro0gn1x9ioawQE8WMfvLXDz3ZqxpK';//huh
+    private const CLIENT_ID = 'MOBrBDS8blbauoSck0ZfDbtuzpyT';
+    private const CLIENT_SECRET = 'lsACyCD94FhDUtGTXi3QzcFE2uU1hqtDaKeqrdwj';
     private const OAUTH_URL = 'https://oauth.secure.pixiv.net/auth/token';
     private const BASE_URL = 'https://public-api.secure.pixiv.net';
 
@@ -97,7 +97,8 @@ class PixivClient
 
         $date = date(DATE_RFC3339);
         $headers = array_merge([
-            'User-Agent' => 'PixivAndroidApp/5.0.156 (Android 9; ONEPLUS A6013)',
+            'Referer' => 'https://spapi.pixiv.net/',
+            'User-Agent' => 'PixivIOSApp/5.8.7',
             'content-type' => 'application/x-www-form-urlencoded',
             'x-client-time' => $date,
             'x-client-hash' => md5($date . self::PIXIV_HASH),
