@@ -112,7 +112,7 @@ class PixivClient
         ]);
         $result = json_decode((string) $response->getBody(), true);
 
-        if (isset($result['has_error'])) {
+        if (!$result || isset($result['has_error'])) {
             throw new UnauthorizedException('Login error: ' . $result['errors']['system']['message']);
         }
         $result['response']['expires_at'] = time() + $result['response']['expires_in'];
