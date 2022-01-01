@@ -2,8 +2,8 @@
 
 namespace Xandros15\Tumbler\Sites;
 
-
 use Exception;
+use RuntimeException;
 use Symfony\Component\Yaml\Yaml;
 use Xandros15\Tumbler\Client;
 use Xandros15\Tumbler\Filesystem;
@@ -64,7 +64,10 @@ final class Pixiv implements SiteInterface
         while (1) {
             $response = $this->api->works($user_id, $page);
             Logger::info("Page: {$page}");
-
+            if (isset($response['has_error']) && $response['has_error'] === true) {
+                Logger::error('System received error on works request.', $response['errors']);
+                throw new RuntimeException('System received error on works request.');
+            }
             foreach ($response['response'] as $work) {
                 $userName = $work['user']['name'];
                 $work = new Work($work);
