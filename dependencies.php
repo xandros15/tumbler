@@ -53,15 +53,6 @@ $container['hf'] = function (Container $container): SiteInterface {
     );
 };
 
-$container['mail'] = function (Container $container) {
-    $config = $container['config']['mailer'];
-    $smtp = new Swift_SmtpTransport($config['host'], $config['port'], $config['security']);
-    $smtp->setPassword($config['password']);
-    $smtp->setUsername($config['login']);
-
-    return new Swift_Mailer($smtp);
-};
-
 $container['h2r'] = function (): SiteInterface {
     return new H2R();
 };
