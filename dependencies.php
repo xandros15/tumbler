@@ -4,7 +4,7 @@ use Monolog\{ErrorHandler, Formatter\LineFormatter, Handler\StreamHandler, Logge
 use Pimple\{Container, Psr11\Container as Psr11Container};
 use Symfony\Component\Yaml\Yaml;
 use Xandros15\Tumbler\Logger as StaticLogger;
-use Xandros15\Tumbler\Sites\{EH, H2R, HF, Nijie, Pixiv, SC, SiteInterface, Tumblr};
+use Xandros15\Tumbler\Sites\{EH, H2R, HF, Nijie, SC, SiteInterface, Tumblr};
 
 $container = new Container();
 
@@ -32,13 +32,6 @@ $container['logger'] = function (): Monolog\Logger {
 
 $container['config'] = function (): array {
     return Yaml::parseFile(__DIR__ . '/config.yaml');
-};
-
-$container['pixiv'] = function (Container $container): SiteInterface {
-    return new Pixiv(
-        $container['config']['pixiv']['username'],
-        $container['config']['pixiv']['password']
-    );
 };
 
 $container['tumblr'] = function (Container $container): SiteInterface {
